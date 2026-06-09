@@ -1,0 +1,48 @@
+{
+	"name": "backend",
+	"version": "1.0.0",
+	"description": "Backend stuff for Project Manager",
+	"license": "ISC",
+	"author": "Roman Turtureanu",
+	"type": "module",
+	"scripts": {
+		"build": "tsc",
+		"dev": "tsx watch --env-file=.env --conditions development src/server.ts",
+		"start": "node dist/server.js"
+	},
+	"imports": {
+		"#db": {
+			"development": "./src/db/dbIndex.ts",
+			"default": "./dist/db/dbIndex.js"
+		},
+		"#models": {
+			"development": "./src/models/modelsIndex.ts",
+			"default": "./dist/models/modelsIndex.js"
+		},
+		"#controllers": {
+			"development": "./src/controllers/controllersIndex.ts",
+			"default": "./dist/controllers/controllersIndex.js"
+		},
+		"#routes": {
+			"development": "./src/routes/routesIndex.ts",
+			"default": "./dist/routes/routesIndex.js"
+		},
+		"#middleware": {
+			"development": "./src/middleware/middlewareIndex.ts",
+			"default": "./dist/middleware/middlewareIndex.js"
+		}
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.3",
+		"cors": "^2.8.6",
+		"dotenv": "^17.4.2",
+		"express": "^5.2.1",
+		"jsonwebtoken": "^9.0.3",
+		"mongoose": "^9.6.3",
+		"typescript": "^6.0.3"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.6",
+		"tsx": "^4.22.4"
+	}
+}
