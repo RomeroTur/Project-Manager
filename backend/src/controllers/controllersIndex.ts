@@ -1,4 +1,11 @@
-export { logout, login, register } from "./authControllers.js";
+export {
+	getAllUsers,
+	getUserById,
+	logoutUser,
+	loginUser,
+	registerUser,
+} from "./userControllers.js";
+
 export {
 	getAllProjects,
 	deleteProject,

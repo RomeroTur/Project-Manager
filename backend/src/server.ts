@@ -1,12 +1,12 @@
 import express from "express";
 
 import { connectDB } from "#db";
-import { authRouter, projectRouter } from "#routes";
+import { userRouter, projectRouter } from "#routes";
 
 const server = express();
 
-server.use("/auth/", authRouter);
-server.use("/project/", projectRouter);
+server.use("/users/", userRouter);
+server.use("/projects/", projectRouter);
 
 const PORT = process.env.PORT || 3000;
 

@@ -1,15 +1,42 @@
 import { RequestHandler } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User, UserRegisterCheckSchema } from "#models";
 import { z } from "zod";
 
-const logout: RequestHandler = async (req, res, next) => {
+type UserType = {
+	firstname: string;
+	lastname: string;
+	email: string;
+	password: string;
+	role: string;
+};
+
+const getAllUsers: RequestHandler = async (req, res) => {
+	try {
+		const users: UserType[] = await User.find();
+		res.status(200).json(users);
+	} catch (error) {
+		res.status(404).json({ message: "Failed to get Users", error });
+	}
+};
+
+const getUserById: RequestHandler = async (req, res) => {
+	const { id } = req.params;
+	try {
+		const searchedUser = await User.findById(id);
+		res.status(200).json(searchedUser);
+	} catch (err) {
+		res.status(404).json({ message: "Failed to get User", err });
+	}
+};
+
+const logoutUser: RequestHandler = async (req, res, next) => {
 	res.clearCookie("token");
 	res.json({ msg: "Logged out" });
 };
 
-const login: RequestHandler = async (req, res, next) => {
+const loginUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { password, email } = req.body;
 
@@ -21,10 +48,7 @@ const login: RequestHandler = async (req, res, next) => {
 			throw err;
 		}
 
-		const match = await bcrypt.compare(
-			password,
-			user!.passwordHash as string,
-		);
+		const match = await bcrypt.compare(password, user!.password as string);
 
 		let token;
 		if (!match) {
@@ -50,7 +74,7 @@ const login: RequestHandler = async (req, res, next) => {
 	}
 };
 
-const register: RequestHandler = async (req, res, next) => {
+const registerUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { data, success, error } = UserRegisterCheckSchema.safeParse(
 			req.body,
@@ -70,9 +94,11 @@ const register: RequestHandler = async (req, res, next) => {
 		const hashedPW = await bcrypt.hash(data.password, salt);
 
 		const user = await User.create({
-			username: data.username,
+			firstname: data.firstname,
+			lastname: data.lastname,
 			email: data.email,
-			passwordHash: hashedPW,
+			password: hashedPW,
+			role: data.role,
 		});
 
 		res.json({ msg: "Register | Success:", user: { ...user } });
@@ -81,4 +107,4 @@ const register: RequestHandler = async (req, res, next) => {
 	}
 };
 
-export { logout, login, register };
+export { getAllUsers, getUserById, logoutUser, loginUser, registerUser };

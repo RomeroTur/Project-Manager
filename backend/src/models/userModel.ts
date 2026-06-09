@@ -38,4 +38,4 @@ const UserRegisterCheckSchema = z.object({
 	role: z.string({ error: "Role is required" }),
 });
 
-export { UserSchema, User };
+export { UserSchema, User, UserRegisterCheckSchema };

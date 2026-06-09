@@ -32,7 +32,7 @@ const createProject: RequestHandler = async (req, res) => {
 
 const deleteProject: RequestHandler = async (req, res) => {
 	try {
-		const { id } = req.body;
+		const { id } = req.params;
 		const deleted = await Project.findByIdAndDelete(id);
 		if (!deleted) {
 			res.status(404).json({ message: `Project not found: ${id}` });
@@ -46,7 +46,8 @@ const deleteProject: RequestHandler = async (req, res) => {
 
 const updateProject: RequestHandler = async (req, res) => {
 	try {
-		const { id, ...updates } = req.body;
+		const { id } = req.params;
+		const updates = req.body;
 		const updated = await Project.findByIdAndUpdate(
 			id,
 			{ $set: updates },
