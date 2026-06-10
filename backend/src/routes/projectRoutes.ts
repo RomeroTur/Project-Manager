@@ -12,7 +12,7 @@ const projectRouter = Router();
 projectRouter.use(express.json());
 
 projectRouter.get("/", getAllProjects);
-projectRouter.post("/", createProject);
+projectRouter.post("/create", createProject);
 projectRouter.delete("/:id", deleteProject);
 projectRouter.put("/:id", updateProject);
 
