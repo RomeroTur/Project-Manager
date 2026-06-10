@@ -3,8 +3,16 @@ import express from "express";
 import { connectDB } from "#db";
 import { userRouter, projectRouter } from "#routes";
 
-const server = express();
+import cors from "cors";
 
+const server = express();
+server.use(
+	cors({
+		credentials: true,
+		origin: process.env.CLIENT_URL,
+	}),
+);
+server.use(express.json());
 server.use("/users/", userRouter);
 server.use("/projects/", projectRouter);
 

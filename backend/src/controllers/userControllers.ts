@@ -87,7 +87,11 @@ const loginUser: RequestHandler = async (req, res, next) => {
 			},
 		});
 	} catch (err) {
-		next(err);
+		console.log("err: ", err);
+
+		return res.status(500).json({
+			message: "Login failed",
+		});
 	}
 };
 
