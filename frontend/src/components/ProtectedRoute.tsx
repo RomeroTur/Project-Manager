@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 import type { Role } from "../api/auth";
 
 interface ProtectedRouteProps {
@@ -8,9 +8,9 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ role }: ProtectedRouteProps) {
-	const { user, loading } = useAuth();
+	const { user } = useAuth();
 
-	if (loading) {
+	/*if (loading) {
 		return (
 			<div className="flex h-screen items-center justify-center bg-gray-950">
 				<span className="text-sm text-gray-400 animate-pulse">
@@ -18,7 +18,7 @@ export default function ProtectedRoute({ role }: ProtectedRouteProps) {
 				</span>
 			</div>
 		);
-	}
+	}*/
 
 	if (!user) {
 		return <Navigate to="/login" replace />;

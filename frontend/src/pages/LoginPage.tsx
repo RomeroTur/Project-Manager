@@ -1,102 +1,83 @@
-import { useState, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router";
-import { apiLogin } from "../api/auth";
-import { useAuth } from "../contexts/AuthContext";
-import Input from "../components/Input";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function LoginPage() {
+import { loginSchema } from "../schemas/loginSchema";
+import { useAuth } from "../hooks/useAuth";
+
+const LoginPage = () => {
 	const navigate = useNavigate();
-	const { refreshUser } = useAuth();
+
+	const { login } = useAuth();
 
 	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [error, setError] = useState<string | null>(null);
-	const [loading, setLoading] = useState(false);
 
-	async function handleSubmit(e: FormEvent) {
+	const [password, setPassword] = useState("");
+
+	const [error, setError] = useState("");
+
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setError(null);
-		setLoading(true);
+
+		const validation = loginSchema.safeParse({
+			email,
+			password,
+		});
+
+		if (!validation.success) {
+			setError(validation.error.issues[0].message);
+			return;
+		}
 
 		try {
-			await apiLogin({ email, password });
-			// Sync the user from the cookie into context, then redirect by role
-			await refreshUser();
-			// refreshUser sets the user; read role from /me response via context
-			// We navigate to a neutral route — ProtectedRoute will redirect by role
-			navigate("/", { replace: true });
+			const response = await fetch("http://localhost:3000/users/login", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					email,
+					password,
+				}),
+			});
+
+			const data = await response.json();
+
+			login(data.user, data.token);
+
+			if (data.user.role === "admin") {
+				navigate("/admin");
+			} else {
+				navigate("/dashboard");
+			}
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Login failed");
-		} finally {
-			setLoading(false);
+			console.log("err: ", err);
+			setError("Login failed");
 		}
-	}
+	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-gray-950 px-4">
-			<div className="w-full max-w-sm">
-				{/* Header */}
-				<div className="mb-8 text-center">
-					<h1 className="text-2xl font-semibold tracking-tight text-white">
-						Taskflow
-					</h1>
-					<p className="mt-1 text-sm text-gray-500">
-						Sign in to your workspace
-					</p>
-				</div>
+		<form onSubmit={handleSubmit}>
+			<h1>Login</h1>
 
-				{/* Card */}
-				<div className="rounded-xl border border-gray-800 bg-gray-900 p-6 shadow-xl">
-					<form
-						onSubmit={handleSubmit}
-						className="flex flex-col gap-4"
-					>
-						<Input
-							label="Email"
-							type="email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							placeholder="you@example.com"
-							autoComplete="email"
-							required
-						/>
+			<input
+				type="email"
+				placeholder="Email"
+				value={email}
+				onChange={(e) => setEmail(e.target.value)}
+			/>
 
-						<Input
-							label="Password"
-							type="password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							placeholder="••••••••"
-							autoComplete="current-password"
-							required
-						/>
+			<input
+				type="password"
+				placeholder="Password"
+				value={password}
+				onChange={(e) => setPassword(e.target.value)}
+			/>
 
-						{error && (
-							<p className="rounded-md bg-red-900/30 border border-red-700/50 px-3 py-2 text-xs text-red-400">
-								{error}
-							</p>
-						)}
+			<button type="submit">Login</button>
 
-						<button
-							type="submit"
-							disabled={loading}
-							className="mt-1 rounded-md bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							{loading ? "Signing in…" : "Sign in"}
-						</button>
-					</form>
-				</div>
-
-				<p className="mt-4 text-center text-xs text-gray-600">
-					No account?{" "}
-					<Link
-						to="/register"
-						className="text-violet-400 hover:text-violet-300"
-					>
-						Register
-					</Link>
-				</p>
-			</div>
-		</div>
+			{error && <p>{error}</p>}
+		</form>
 	);
-}
+};
+
+export default LoginPage;

@@ -57,8 +57,15 @@ const loginUser: RequestHandler = async (req, res, next) => {
 			throw err;
 		} else {
 			token = jwt.sign(
-				{ _id: user._id },
+				{
+					_id: user._id,
+					role: user.role,
+					email: user.email,
+				},
 				process.env.TOKEN_MIX as string,
+				{
+					expiresIn: "1d",
+				},
 			);
 		}
 
@@ -68,7 +75,17 @@ const loginUser: RequestHandler = async (req, res, next) => {
 			sameSite: "lax",
 		});
 
-		res.json({ msg: "Login | Success", token });
+		res.json({
+			msg: "Login | Success",
+			token,
+			user: {
+				_id: user._id,
+				firstname: user.firstname,
+				lastname: user.lastname,
+				email: user.email,
+				role: user.role,
+			},
+		});
 	} catch (err) {
 		next(err);
 	}
