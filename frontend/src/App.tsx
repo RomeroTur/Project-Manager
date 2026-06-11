@@ -6,6 +6,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 
 import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import EditProjectPage from "./pages/EditProjectPage";
+
 import UsersPage from "./pages/UsersPage";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -29,6 +32,16 @@ function App() {
 							<Route index element={<AdminDashboard />} />
 
 							<Route path="projects" element={<ProjectsPage />} />
+
+							<Route
+								path="projects/:id"
+								element={<ProjectDetailsPage />}
+							/>
+
+							<Route
+								path="projects/:id/edit"
+								element={<EditProjectPage />}
+							/>
 
 							<Route path="users" element={<UsersPage />} />
 						</Route>
