@@ -1,8 +1,8 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 
-const ProtectedRoute = () => {
+const RootRedirect = () => {
 	const { user, loading } = useAuth();
 
 	if (loading) {
@@ -13,7 +13,12 @@ const ProtectedRoute = () => {
 		return <Navigate to="/login" replace />;
 	}
 
-	return <Outlet />;
+	return (
+		<Navigate
+			to={user.role === "admin" ? "/admin" : "/dashboard"}
+			replace
+		/>
+	);
 };
 
-export default ProtectedRoute;
+export default RootRedirect;

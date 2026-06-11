@@ -3,9 +3,9 @@ import type { User } from "../types/User";
 
 export type AuthContextType = {
 	user: User | null;
-	token: string | null;
-	login: (user: User, token: string) => void;
-	logout: () => void;
+	loading: boolean;
+	login: () => Promise<void>;
+	logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 
 import { loginSchema } from "../schemas/loginSchema";
 import { useAuth } from "../hooks/useAuth";
@@ -7,16 +7,26 @@ import { useAuth } from "../hooks/useAuth";
 const LoginPage = () => {
 	const navigate = useNavigate();
 
-	const { login } = useAuth();
+	const { login, user, loading } = useAuth();
 
 	const [email, setEmail] = useState("");
-
 	const [password, setPassword] = useState("");
-
 	const [error, setError] = useState("");
+
+	// Already logged in?
+	if (!loading && user) {
+		return (
+			<Navigate
+				to={user.role === "admin" ? "/admin" : "/dashboard"}
+				replace
+			/>
+		);
+	}
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+
+		setError("");
 
 		const validation = loginSchema.safeParse({
 			email,
@@ -43,41 +53,75 @@ const LoginPage = () => {
 
 			const data = await response.json();
 
-			login(data.user, data.token);
+			if (!response.ok) {
+				throw new Error(data.message || "Login failed");
+			}
 
-			if (data.user.role === "admin") {
+			// AuthProvider fetches /users/me
+			await login();
+
+			// Ask backend who is logged in
+			const meResponse = await fetch("http://localhost:3000/users/me", {
+				credentials: "include",
+			});
+
+			if (!meResponse.ok) {
+				throw new Error("Could not load user information");
+			}
+
+			const currentUser = await meResponse.json();
+
+			if (currentUser.role === "admin") {
 				navigate("/admin");
 			} else {
 				navigate("/dashboard");
 			}
 		} catch (err) {
-			console.log("err: ", err);
-			setError("Login failed");
+			if (err instanceof Error) {
+				setError(err.message);
+			} else {
+				setError("Login failed");
+			}
 		}
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
+		<div>
 			<h1>Login</h1>
 
-			<input
-				type="email"
-				placeholder="Email"
-				value={email}
-				onChange={(e) => setEmail(e.target.value)}
-			/>
+			<form onSubmit={handleSubmit}>
+				<div>
+					<input
+						type="email"
+						placeholder="Email"
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+					/>
+				</div>
 
-			<input
-				type="password"
-				placeholder="Password"
-				value={password}
-				onChange={(e) => setPassword(e.target.value)}
-			/>
+				<div>
+					<input
+						type="password"
+						placeholder="Password"
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+					/>
+				</div>
 
-			<button type="submit">Login</button>
+				<button type="submit">Login</button>
+			</form>
 
-			{error && <p>{error}</p>}
-		</form>
+			{error && (
+				<p
+					style={{
+						color: "red",
+						marginTop: "1rem",
+					}}
+				>
+					{error}
+				</p>
+			)}
+		</div>
 	);
 };
 

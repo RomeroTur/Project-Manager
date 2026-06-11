@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "../hooks/useAuth";
-import type { Role } from "../api/auth";
+type Role = "admin" | "user";
 
 interface ProtectedRouteProps {
 	/** If provided, only users with this role can access the route */

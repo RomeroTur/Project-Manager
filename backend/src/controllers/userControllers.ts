@@ -12,6 +12,18 @@ type UserType = {
 	role: string;
 };
 
+const getCurrentUser: RequestHandler = async (req: any, res) => {
+	const user = await User.findById(req.user.userId).select("-password");
+
+	if (!user) {
+		return res.status(404).json({
+			message: "User not found",
+		});
+	}
+
+	res.json(user);
+};
+
 const getAllUsers: RequestHandler = async (req, res) => {
 	try {
 		const users: UserType[] = await User.find();
@@ -58,14 +70,11 @@ const loginUser: RequestHandler = async (req, res, next) => {
 		} else {
 			token = jwt.sign(
 				{
-					_id: user._id,
+					userId: user._id,
 					role: user.role,
 					email: user.email,
 				},
 				process.env.TOKEN_MIX as string,
-				{
-					expiresIn: "1d",
-				},
 			);
 		}
 
@@ -76,15 +85,7 @@ const loginUser: RequestHandler = async (req, res, next) => {
 		});
 
 		res.json({
-			msg: "Login | Success",
-			token,
-			user: {
-				_id: user._id,
-				firstname: user.firstname,
-				lastname: user.lastname,
-				email: user.email,
-				role: user.role,
-			},
+			msg: "Login successful",
 		});
 	} catch (err) {
 		console.log("err: ", err);
@@ -128,4 +129,11 @@ const registerUser: RequestHandler = async (req, res, next) => {
 	}
 };
 
-export { getAllUsers, getUserById, logoutUser, loginUser, registerUser };
+export {
+	getCurrentUser,
+	getAllUsers,
+	getUserById,
+	logoutUser,
+	loginUser,
+	registerUser,
+};
