@@ -2,7 +2,9 @@ export {
 	getCurrentUser,
 	getAllUsers,
 	getUserById,
+	updateUser,
 	logoutUser,
+	deleteUser,
 	loginUser,
 	registerUser,
 } from "./userControllers.js";

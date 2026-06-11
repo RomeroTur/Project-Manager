@@ -29,7 +29,7 @@ const EditProjectPage = () => {
 		e.preventDefault();
 
 		await fetch(`http://localhost:3000/projects/${id}`, {
-			method: "PATCH",
+			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
 			},

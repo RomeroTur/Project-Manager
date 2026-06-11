@@ -10,6 +10,8 @@ import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import EditProjectPage from "./pages/EditProjectPage";
 
 import UsersPage from "./pages/UsersPage";
+import UserDetailsPage from "./pages/UserDetailsPage";
+import UserEditPage from "./pages/UserEditPage";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
@@ -44,6 +46,14 @@ function App() {
 							/>
 
 							<Route path="users" element={<UsersPage />} />
+							<Route
+								path="users/:id"
+								element={<UserDetailsPage />}
+							/>
+							<Route
+								path="users/:id/edit"
+								element={<UserEditPage />}
+							/>
 						</Route>
 					</Route>
 				</Route>

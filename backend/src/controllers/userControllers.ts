@@ -4,14 +4,9 @@ import jwt from "jsonwebtoken";
 import { User, UserRegisterCheckSchema } from "#models";
 import { z } from "zod";
 
-type UserType = {
-	firstname: string;
-	lastname: string;
-	email: string;
-	password: string;
-	role: string;
-};
-
+/* -----------------------------
+   GET CURRENT USER
+------------------------------*/
 const getCurrentUser: RequestHandler = async (req: any, res) => {
 	const user = await User.findById(req.user.userId).select("-password");
 
@@ -24,78 +19,173 @@ const getCurrentUser: RequestHandler = async (req: any, res) => {
 	res.json(user);
 };
 
+/* -----------------------------
+   GET ALL USERS
+------------------------------*/
 const getAllUsers: RequestHandler = async (req, res) => {
 	try {
-		const users: UserType[] = await User.find();
+		const users = await User.find().select("-password");
 		res.status(200).json(users);
 	} catch (error) {
-		res.status(404).json({ message: "Failed to get Users", error });
+		res.status(500).json({
+			message: "Failed to get users",
+			error,
+		});
 	}
 };
 
+/* -----------------------------
+   GET USER BY ID
+------------------------------*/
 const getUserById: RequestHandler = async (req, res) => {
-	const { id } = req.params;
 	try {
-		const searchedUser = await User.findById(id);
-		res.status(200).json(searchedUser);
+		const user = await User.findById(req.params.id).select("-password");
+
+		if (!user) {
+			return res.status(404).json({
+				message: "User not found",
+			});
+		}
+
+		res.status(200).json(user);
 	} catch (err) {
-		res.status(404).json({ message: "Failed to get User", err });
+		res.status(500).json({
+			message: "Failed to get user",
+			err,
+		});
 	}
 };
 
-const logoutUser: RequestHandler = async (req, res, next) => {
-	res.clearCookie("token");
-	res.json({ msg: "Logged out" });
+/* -----------------------------
+   UPDATE USER
+------------------------------*/
+const updateUser: RequestHandler = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		const updates = req.body;
+
+		// prevent password overwrite unless intended
+		if (updates.password) {
+			const salt = await bcrypt.genSalt(13);
+			updates.password = await bcrypt.hash(updates.password, salt);
+		}
+
+		const updated = await User.findByIdAndUpdate(
+			id,
+			{ $set: updates },
+			{ new: true, runValidators: true },
+		).select("-password");
+
+		if (!updated) {
+			return res.status(404).json({
+				message: "User not found",
+			});
+		}
+
+		res.status(200).json(updated);
+	} catch (error) {
+		res.status(500).json({
+			message: "Failed to update user",
+			error,
+		});
+	}
 };
 
-const loginUser: RequestHandler = async (req, res, next) => {
+/* -----------------------------
+   DELETE USER
+------------------------------*/
+const deleteUser: RequestHandler = async (req, res) => {
+	try {
+		const deleted = await User.findByIdAndDelete(req.params.id);
+
+		if (!deleted) {
+			return res.status(404).json({
+				message: "User not found",
+			});
+		}
+
+		res.status(200).json({
+			message: "User deleted",
+		});
+	} catch (error) {
+		res.status(500).json({
+			message: "Failed to delete user",
+			error,
+		});
+	}
+};
+
+/* -----------------------------
+   LOGIN
+------------------------------*/
+const loginUser: RequestHandler = async (req, res) => {
 	try {
 		const { password, email } = req.body;
 
-		const user = await User.findOne({ email }).lean();
+		const user = await User.findOne({ email });
 
 		if (!user) {
-			const err = new Error("No User with such E-Mail");
-			(err as any).status = 400;
-			throw err;
+			return res.status(400).json({
+				message: "Invalid credentials",
+			});
 		}
 
-		const match = await bcrypt.compare(password, user!.password as string);
+		const match = await bcrypt.compare(password, user.password as string);
 
-		let token;
 		if (!match) {
-			const err = new Error("Invalid password");
-			(err as any).status = 400;
-			throw err;
-		} else {
-			token = jwt.sign(
-				{
-					userId: user._id,
-					role: user.role,
-					email: user.email,
-				},
-				process.env.TOKEN_MIX as string,
-			);
+			return res.status(400).json({
+				message: "Invalid credentials",
+			});
 		}
+
+		const token = jwt.sign(
+			{
+				userId: user._id,
+				role: user.role,
+			},
+			process.env.TOKEN_MIX as string,
+		);
 
 		res.cookie("token", token, {
 			httpOnly: true,
-			secure: false,
 			sameSite: "lax",
 		});
 
 		res.json({
-			msg: "Login successful",
+			message: "Login successful",
+			user: {
+				_id: user._id,
+				firstname: user.firstname,
+				lastname: user.lastname,
+				email: user.email,
+				role: user.role,
+			},
 		});
 	} catch (err) {
-		console.log("err: ", err);
-
-		return res.status(500).json({
+		res.status(500).json({
 			message: "Login failed",
 		});
 	}
 };
 
+/* -----------------------------
+   LOGOUT
+------------------------------*/
+const logoutUser: RequestHandler = async (req, res) => {
+	res.clearCookie("token", {
+		httpOnly: true,
+		sameSite: "lax",
+	});
+
+	res.json({
+		message: "Logged out successfully",
+	});
+};
+
+/* -----------------------------
+   REGISTER
+------------------------------*/
 const registerUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { data, success, error } = UserRegisterCheckSchema.safeParse(
@@ -103,27 +193,33 @@ const registerUser: RequestHandler = async (req, res, next) => {
 		);
 
 		if (!success) {
-			const err = new Error(z.prettifyError(error));
-			(err as any).status = 400;
-			throw err;
+			return res.status(400).json({
+				message: z.prettifyError(error),
+			});
 		}
 
-		const emailExists = await User.exists({ email: data.email });
-		if (emailExists)
-			throw new Error("User with this E-Mail already exists");
-
-		const salt = await bcrypt.genSalt(13);
-		const hashedPW = await bcrypt.hash(data.password, salt);
-
-		const user = await User.create({
-			firstname: data.firstname,
-			lastname: data.lastname,
+		const exists = await User.exists({
 			email: data.email,
-			password: hashedPW,
-			role: data.role,
 		});
 
-		res.json({ msg: "Register | Success:", user: { ...user } });
+		if (exists) {
+			return res.status(400).json({
+				message: "Email already exists",
+			});
+		}
+
+		const salt = await bcrypt.genSalt(13);
+		const hashed = await bcrypt.hash(data.password, salt);
+
+		const user = await User.create({
+			...data,
+			password: hashed,
+		});
+
+		res.status(201).json({
+			message: "User created",
+			user,
+		});
 	} catch (err) {
 		next(err);
 	}
@@ -133,7 +229,9 @@ export {
 	getCurrentUser,
 	getAllUsers,
 	getUserById,
+	updateUser,
 	logoutUser,
+	deleteUser,
 	loginUser,
 	registerUser,
 };
