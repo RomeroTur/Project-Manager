@@ -9,6 +9,7 @@ export {
 
 export {
 	getAllProjects,
+	getProjectById,
 	deleteProject,
 	createProject,
 	updateProject,
