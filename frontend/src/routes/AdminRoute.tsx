@@ -6,7 +6,7 @@ const AdminRoute = () => {
 	const { user, loading } = useAuth();
 
 	if (loading) {
-		return <div>Loading...</div>;
+		return <p>Loading...</p>;
 	}
 
 	if (!user) {

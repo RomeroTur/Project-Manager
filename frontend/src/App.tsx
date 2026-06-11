@@ -1,18 +1,23 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
+
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 
+import ProjectsPage from "./pages/ProjectsPage";
+import UsersPage from "./pages/UsersPage";
+
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
-import RootRedirect from "./routes/RootRedirect";
+
+import AdminLayout from "./layouts/AdminLayout";
 
 function App() {
 	return (
 		<BrowserRouter>
 			<Routes>
-				<Route path="/" element={<RootRedirect />} />
+				<Route path="/" element={<Navigate to="/login" replace />} />
 
 				<Route path="/login" element={<LoginPage />} />
 
@@ -20,7 +25,13 @@ function App() {
 					<Route path="/dashboard" element={<UserDashboard />} />
 
 					<Route element={<AdminRoute />}>
-						<Route path="/admin" element={<AdminDashboard />} />
+						<Route path="/admin" element={<AdminLayout />}>
+							<Route index element={<AdminDashboard />} />
+
+							<Route path="projects" element={<ProjectsPage />} />
+
+							<Route path="users" element={<UsersPage />} />
+						</Route>
 					</Route>
 				</Route>
 			</Routes>
