@@ -4,9 +4,6 @@ import jwt from "jsonwebtoken";
 import { User, UserRegisterCheckSchema } from "#models";
 import { z } from "zod";
 
-/* -----------------------------
-   GET CURRENT USER
-------------------------------*/
 const getCurrentUser: RequestHandler = async (req: any, res) => {
 	const user = await User.findById(req.user.userId).select("-password");
 
@@ -19,9 +16,6 @@ const getCurrentUser: RequestHandler = async (req: any, res) => {
 	res.json(user);
 };
 
-/* -----------------------------
-   GET ALL USERS
-------------------------------*/
 const getAllUsers: RequestHandler = async (req, res) => {
 	try {
 		const users = await User.find().select("-password");
@@ -34,9 +28,6 @@ const getAllUsers: RequestHandler = async (req, res) => {
 	}
 };
 
-/* -----------------------------
-   GET USER BY ID
-------------------------------*/
 const getUserById: RequestHandler = async (req, res) => {
 	try {
 		const user = await User.findById(req.params.id).select("-password");
@@ -56,16 +47,12 @@ const getUserById: RequestHandler = async (req, res) => {
 	}
 };
 
-/* -----------------------------
-   UPDATE USER
-------------------------------*/
 const updateUser: RequestHandler = async (req, res) => {
 	try {
 		const { id } = req.params;
 
 		const updates = req.body;
 
-		// prevent password overwrite unless intended
 		if (updates.password) {
 			const salt = await bcrypt.genSalt(13);
 			updates.password = await bcrypt.hash(updates.password, salt);
@@ -92,9 +79,6 @@ const updateUser: RequestHandler = async (req, res) => {
 	}
 };
 
-/* -----------------------------
-   DELETE USER
-------------------------------*/
 const deleteUser: RequestHandler = async (req, res) => {
 	try {
 		const deleted = await User.findByIdAndDelete(req.params.id);
@@ -116,9 +100,6 @@ const deleteUser: RequestHandler = async (req, res) => {
 	}
 };
 
-/* -----------------------------
-   LOGIN
-------------------------------*/
 const loginUser: RequestHandler = async (req, res) => {
 	try {
 		const { password, email } = req.body;
@@ -169,9 +150,6 @@ const loginUser: RequestHandler = async (req, res) => {
 	}
 };
 
-/* -----------------------------
-   LOGOUT
-------------------------------*/
 const logoutUser: RequestHandler = async (req, res) => {
 	res.clearCookie("token", {
 		httpOnly: true,
@@ -183,9 +161,6 @@ const logoutUser: RequestHandler = async (req, res) => {
 	});
 };
 
-/* -----------------------------
-   REGISTER
-------------------------------*/
 const registerUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { data, success, error } = UserRegisterCheckSchema.safeParse(
