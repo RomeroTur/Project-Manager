@@ -4,6 +4,7 @@ import type { User } from "../types/User";
 export type AuthContextType = {
 	user: User | null;
 	loading: boolean;
+
 	login: () => Promise<void>;
 	logout: () => Promise<void>;
 };

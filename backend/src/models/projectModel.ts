@@ -145,6 +145,10 @@ const ProjectSchema = new Schema(
 			type: Date,
 		},
 
+		/*taskDescription: {
+			type: String,
+		},*/
+
 		tasks: [TaskSchema],
 
 		comments: [CommentSchema],
@@ -175,7 +179,7 @@ const ProjectCreateCheckSchema = z.object({
 
 	projectMembers: z.array(z.string()).optional(),
 
-	createdBy: z.string(),
+	//createdBy: z.string(),
 
 	startDate: z.coerce.date().optional(),
 

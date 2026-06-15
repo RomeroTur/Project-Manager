@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { AuthContext } from "../context/AuthContext";
 import type { User } from "../types/User";
@@ -10,23 +9,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const [loading, setLoading] = useState(true);
 
 	const login = async () => {
-		try {
-			const response = await fetch("http://localhost:3000/users/me", {
-				credentials: "include",
-			});
+		const response = await fetch("http://localhost:3000/users/me", {
+			credentials: "include",
+		});
 
-			if (!response.ok) {
-				setUser(null);
-				return;
-			}
-
-			const userData = await response.json();
-
-			setUser(userData);
-		} catch (err) {
-			console.error(err);
-			setUser(null);
+		if (!response.ok) {
+			throw new Error("Failed to load user");
 		}
+
+		const userData = await response.json();
+
+		setUser(userData);
 	};
 
 	const logout = async () => {
@@ -59,6 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				setUser(userData);
 			} catch (err) {
 				console.error(err);
+				setUser(null);
 			} finally {
 				setLoading(false);
 			}

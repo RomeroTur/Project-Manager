@@ -7,6 +7,7 @@ import UserDashboard from "./pages/UserDashboard";
 
 import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import CreateProjectPage from "./pages/CreateProjectPage";
 import EditProjectPage from "./pages/EditProjectPage";
 
 import UsersPage from "./pages/UsersPage";
@@ -38,6 +39,11 @@ function App() {
 							<Route
 								path="projects/:id"
 								element={<ProjectDetailsPage />}
+							/>
+
+							<Route
+								path="projects/create"
+								element={<CreateProjectPage />}
 							/>
 
 							<Route

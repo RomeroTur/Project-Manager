@@ -7,8 +7,8 @@ import { AppError } from "#utils";
 const getAllProjects: RequestHandler = async (req, res, next) => {
 	try {
 		const projects = await Project.find()
-			.populate("createdBy", "firstname lastname")
-			.populate("projectMembers", "firstname lastname");
+			.populate("projectMembers", "firstname lastname")
+			.populate("createdBy", "firstname lastname");
 
 		res.status(200).json(projects);
 	} catch (error) {
@@ -46,7 +46,10 @@ const createProject: RequestHandler = async (req, res, next) => {
 			);
 		}
 
-		const project = await Project.create(validation.data);
+		const project = await Project.create({
+			...validation.data,
+			createdBy: (req as any).user.userId,
+		});
 
 		res.status(201).json(project);
 	} catch (error) {

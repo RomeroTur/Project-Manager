@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 
-const AdminRoute = () => {
+export default function AdminRoute() {
 	const { user, loading } = useAuth();
 
 	if (loading) {
@@ -18,6 +18,4 @@ const AdminRoute = () => {
 	}
 
 	return <Outlet />;
-};
-
-export default AdminRoute;
+}
