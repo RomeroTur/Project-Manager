@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import { connectDB } from "#db";
 import { userRouter, projectRouter } from "#routes";
+import { errorHandler } from "#middleware";
 
 import cors from "cors";
 
@@ -19,6 +20,8 @@ server.use(cookieParser());
 
 server.use("/users/", userRouter);
 server.use("/projects/", projectRouter);
+
+server.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 

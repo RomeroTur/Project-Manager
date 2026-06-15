@@ -3,54 +3,60 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User, UserRegisterCheckSchema } from "#models";
 import { z } from "zod";
+import { AppError } from "#utils";
 
-const getCurrentUser: RequestHandler = async (req: any, res) => {
-	const user = await User.findById(req.user.userId).select("-password");
+/* -----------------------------
+   GET CURRENT USER
+------------------------------*/
+export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
+	try {
+		const user = await User.findById(req.user.userId).select("-password");
 
-	if (!user) {
-		return res.status(404).json({
-			message: "User not found",
-		});
+		if (!user) {
+			return next(new AppError("User not found", 404));
+		}
+
+		res.json(user);
+	} catch (err) {
+		next(err);
 	}
-
-	res.json(user);
 };
 
-const getAllUsers: RequestHandler = async (req, res) => {
+/* -----------------------------
+   GET ALL USERS
+------------------------------*/
+export const getAllUsers: RequestHandler = async (req, res, next) => {
 	try {
 		const users = await User.find().select("-password");
 		res.status(200).json(users);
-	} catch (error) {
-		res.status(500).json({
-			message: "Failed to get users",
-			error,
-		});
+	} catch (err) {
+		next(new AppError("Failed to get users", 500));
 	}
 };
 
-const getUserById: RequestHandler = async (req, res) => {
+/* -----------------------------
+   GET USER BY ID
+------------------------------*/
+export const getUserById: RequestHandler = async (req, res, next) => {
 	try {
 		const user = await User.findById(req.params.id).select("-password");
 
 		if (!user) {
-			return res.status(404).json({
-				message: "User not found",
-			});
+			return next(new AppError("User not found", 404));
 		}
 
 		res.status(200).json(user);
 	} catch (err) {
-		res.status(500).json({
-			message: "Failed to get user",
-			err,
-		});
+		next(new AppError("Failed to get user", 500));
 	}
 };
 
-const updateUser: RequestHandler = async (req, res) => {
+/* -----------------------------
+   UPDATE USER
+------------------------------*/
+export const updateUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { id } = req.params;
-
 		const updates = req.body;
 
 		if (updates.password) {
@@ -65,65 +71,56 @@ const updateUser: RequestHandler = async (req, res) => {
 		).select("-password");
 
 		if (!updated) {
-			return res.status(404).json({
-				message: "User not found",
-			});
+			return next(new AppError("User not found", 404));
 		}
 
 		res.status(200).json(updated);
-	} catch (error) {
-		res.status(500).json({
-			message: "Failed to update user",
-			error,
-		});
+	} catch (err) {
+		next(new AppError("Failed to update user", 500));
 	}
 };
 
-const deleteUser: RequestHandler = async (req, res) => {
+/* -----------------------------
+   DELETE USER
+------------------------------*/
+export const deleteUser: RequestHandler = async (req, res, next) => {
 	try {
 		const deleted = await User.findByIdAndDelete(req.params.id);
 
 		if (!deleted) {
-			return res.status(404).json({
-				message: "User not found",
-			});
+			return next(new AppError("User not found", 404));
 		}
 
-		res.status(200).json({
-			message: "User deleted",
-		});
-	} catch (error) {
-		res.status(500).json({
-			message: "Failed to delete user",
-			error,
-		});
+		res.status(200).json({ message: "User deleted" });
+	} catch (err) {
+		next(new AppError("Failed to delete user", 500));
 	}
 };
 
-const loginUser: RequestHandler = async (req, res) => {
+/* -----------------------------
+   LOGIN
+------------------------------*/
+export const loginUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { password, email } = req.body;
 
 		const user = await User.findOne({ email });
 
 		if (!user) {
-			return res.status(400).json({
-				message: "Invalid credentials",
-			});
+			return next(new AppError("Invalid credentials", 400));
 		}
 
-		const match = await bcrypt.compare(password, user.password as string);
+		const match = await bcrypt.compare(password, user.password);
 
 		if (!match) {
-			return res.status(400).json({
-				message: "Invalid credentials",
-			});
+			return next(new AppError("Invalid credentials", 400));
 		}
 
 		const token = jwt.sign(
 			{
 				userId: user._id,
 				role: user.role,
+				email: user.email,
 			},
 			process.env.TOKEN_MIX as string,
 		);
@@ -144,13 +141,14 @@ const loginUser: RequestHandler = async (req, res) => {
 			},
 		});
 	} catch (err) {
-		res.status(500).json({
-			message: "Login failed",
-		});
+		next(new AppError("Login failed", 500));
 	}
 };
 
-const logoutUser: RequestHandler = async (req, res) => {
+/* -----------------------------
+   LOGOUT
+------------------------------*/
+export const logoutUser: RequestHandler = async (req, res) => {
 	res.clearCookie("token", {
 		httpOnly: true,
 		sameSite: "lax",
@@ -161,26 +159,23 @@ const logoutUser: RequestHandler = async (req, res) => {
 	});
 };
 
-const registerUser: RequestHandler = async (req, res, next) => {
+/* -----------------------------
+   REGISTER
+------------------------------*/
+export const registerUser: RequestHandler = async (req, res, next) => {
 	try {
 		const { data, success, error } = UserRegisterCheckSchema.safeParse(
 			req.body,
 		);
 
 		if (!success) {
-			return res.status(400).json({
-				message: z.prettifyError(error),
-			});
+			return next(new AppError(z.prettifyError(error), 400));
 		}
 
-		const exists = await User.exists({
-			email: data.email,
-		});
+		const exists = await User.exists({ email: data.email });
 
 		if (exists) {
-			return res.status(400).json({
-				message: "Email already exists",
-			});
+			return next(new AppError("Email already exists", 400));
 		}
 
 		const salt = await bcrypt.genSalt(13);
@@ -189,6 +184,7 @@ const registerUser: RequestHandler = async (req, res, next) => {
 		const user = await User.create({
 			...data,
 			password: hashed,
+			available: true,
 		});
 
 		res.status(201).json({
@@ -198,15 +194,4 @@ const registerUser: RequestHandler = async (req, res, next) => {
 	} catch (err) {
 		next(err);
 	}
-};
-
-export {
-	getCurrentUser,
-	getAllUsers,
-	getUserById,
-	updateUser,
-	logoutUser,
-	deleteUser,
-	loginUser,
-	registerUser,
 };

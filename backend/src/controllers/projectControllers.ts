@@ -1,86 +1,99 @@
-import { Types } from "mongoose";
-import { Project } from "#models";
 import { RequestHandler } from "express";
 
-type ProjectType = {
-	title: string;
-	description?: string;
-	members?: Types.ObjectId[];
-	createdBy?: Types.ObjectId;
-	startdate?: Date;
-	enddate?: Date;
-};
+import { Project, ProjectCreateCheckSchema } from "#models";
 
-const getAllProjects: RequestHandler = async (req, res) => {
+import { AppError } from "#utils";
+
+const getAllProjects: RequestHandler = async (req, res, next) => {
 	try {
-		const projects: ProjectType[] = await Project.find();
+		const projects = await Project.find()
+			.populate("createdBy", "firstname lastname")
+			.populate("projectMembers", "firstname lastname");
+
 		res.status(200).json(projects);
 	} catch (error) {
-		res.status(404).json({ message: "Failed to get projects", error });
+		next(error);
 	}
 };
 
-const getProjectById: RequestHandler = async (req, res) => {
+const getProjectById: RequestHandler = async (req, res, next) => {
 	try {
 		const { id } = req.params;
 
-		const project = await Project.findById(id);
+		const project = await Project.findById(id)
+			.populate("createdBy", "firstname lastname")
+			.populate("projectMembers", "firstname lastname")
+			.populate("tasks.taskMember", "firstname lastname")
+			.populate("comments.author", "firstname lastname");
 
 		if (!project) {
-			return res.status(404).json({
-				message: "Project not found",
-			});
+			return next(new AppError("Project not found", 404));
 		}
 
 		res.status(200).json(project);
 	} catch (error) {
-		res.status(500).json({
-			message: "Failed to get project",
-			error,
-		});
+		next(error);
 	}
 };
 
-const createProject: RequestHandler = async (req, res) => {
+const createProject: RequestHandler = async (req, res, next) => {
 	try {
-		const project = new Project(req.body);
-		const saved = await project.save();
-		res.status(201).json(saved);
-	} catch (error) {
-		res.status(500).json({ message: "Failed to create project", error });
-	}
-};
+		const validation = ProjectCreateCheckSchema.safeParse(req.body);
 
-const deleteProject: RequestHandler = async (req, res) => {
-	try {
-		const { id } = req.params;
-		const deleted = await Project.findByIdAndDelete(id);
-		if (!deleted) {
-			res.status(404).json({ message: `Project not found: ${id}` });
-			return;
+		if (!validation.success) {
+			return next(
+				new AppError(JSON.stringify(validation.error.flatten()), 400),
+			);
 		}
-		res.status(200).json(deleted);
+
+		const project = await Project.create(validation.data);
+
+		res.status(201).json(project);
 	} catch (error) {
-		res.status(500).json({ message: "Failed to delete project", error });
+		next(error);
 	}
 };
 
-const updateProject: RequestHandler = async (req, res) => {
+const updateProject: RequestHandler = async (req, res, next) => {
 	try {
 		const { id } = req.params;
-		const updates = req.body;
+
 		const updated = await Project.findByIdAndUpdate(
 			id,
-			{ $set: updates },
-			{ new: true, runValidators: true },
+			{
+				$set: req.body,
+			},
+			{
+				new: true,
+				runValidators: true,
+			},
 		);
+
 		if (!updated) {
-			res.status(404).json({ message: `Project not found: ${id}` });
-			return;
+			return next(new AppError("Project not found", 404));
 		}
+
 		res.status(200).json(updated);
 	} catch (error) {
-		res.status(500).json({ message: "Failed to update project", error });
+		next(error);
+	}
+};
+
+const deleteProject: RequestHandler = async (req, res, next) => {
+	try {
+		const { id } = req.params;
+
+		const deleted = await Project.findByIdAndDelete(id);
+
+		if (!deleted) {
+			return next(new AppError("Project not found", 404));
+		}
+
+		res.status(200).json({
+			message: "Project deleted",
+		});
+	} catch (error) {
+		next(error);
 	}
 };
 
@@ -88,6 +101,6 @@ export {
 	getAllProjects,
 	getProjectById,
 	createProject,
-	deleteProject,
 	updateProject,
+	deleteProject,
 };

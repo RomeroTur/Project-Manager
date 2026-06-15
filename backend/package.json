@@ -30,6 +30,10 @@
 		"#middleware": {
 			"development": "./src/middleware/middlewareIndex.ts",
 			"default": "./dist/middleware/middlewareIndex.js"
+		},
+		"#utils": {
+			"development": "./src/utils/utilsIndex.ts",
+			"default": "./dist/utils/utilsIndex.js"
 		}
 	},
 	"dependencies": {

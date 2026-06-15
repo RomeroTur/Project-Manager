@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { AppError } from "#utils";
 
 interface JwtPayload {
 	userId: string;
@@ -16,9 +17,7 @@ export const authMiddleware = (
 		const token = req.cookies?.token;
 
 		if (!token) {
-			return res.status(401).json({
-				message: "No token provided",
-			});
+			return next(new AppError("No token provided", 401));
 		}
 
 		const decoded = jwt.verify(
@@ -26,13 +25,10 @@ export const authMiddleware = (
 			process.env.TOKEN_MIX as string,
 		) as JwtPayload;
 
-		// attach user to request
 		(req as any).user = decoded;
 
 		next();
-	} catch (err) {
-		return res.status(401).json({
-			message: "Invalid or expired token",
-		});
+	} catch {
+		next(new AppError("Invalid or expired token", 401));
 	}
 };
