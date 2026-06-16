@@ -1,13 +1,55 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 
 import type { User } from "../types/User";
-import type { Task } from "../types/Project";
+
+/* =========================
+   ZOD VALIDATION
+========================= */
+const ProjectCreateSchema = z
+	.object({
+		projectTitle: z.string().min(3, "Title must be at least 3 characters"),
+
+		projectDescription: z.string().optional(),
+
+		startDate: z.string().optional().nullable(),
+		endDate: z.string().optional().nullable(),
+
+		tasks: z
+			.array(
+				z.object({
+					taskTitle: z.string().min(1, "Task title is required"),
+					taskMember: z.string().nullable().optional(),
+				}),
+			)
+			.optional(),
+	})
+	.refine(
+		(data) => {
+			const start = data.startDate;
+			const end = data.endDate;
+
+			// both or none
+			return (!start && !end) || (!!start && !!end);
+		},
+		{
+			message: "Start date and end date must be set together",
+			path: ["startDate"],
+		},
+	);
+
+type TaskForm = {
+	taskTitle: string;
+	taskMember: string;
+	taskStatus: "on hold";
+};
 
 const CreateProjectPage = () => {
 	const navigate = useNavigate();
 
 	const [users, setUsers] = useState<User[]>([]);
+	const [error, setError] = useState<string | null>(null);
 
 	const [projectTitle, setProjectTitle] = useState("");
 	const [projectDescription, setProjectDescription] = useState("");
@@ -15,17 +57,19 @@ const CreateProjectPage = () => {
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 
-	const [tasks, setTasks] = useState<Task[]>([]);
+	const [tasks, setTasks] = useState<TaskForm[]>([]);
 
+	/* =========================
+	   LOAD USERS
+	========================= */
 	useEffect(() => {
 		const loadUsers = async () => {
 			try {
-				const response = await fetch("http://localhost:3000/users", {
+				const res = await fetch("http://localhost:3000/users", {
 					credentials: "include",
 				});
 
-				const data = await response.json();
-
+				const data = await res.json();
 				setUsers(data);
 			} catch (err) {
 				console.error(err);
@@ -35,196 +79,191 @@ const CreateProjectPage = () => {
 		loadUsers();
 	}, []);
 
+	/* =========================
+	   TASK HANDLERS
+	========================= */
 	const addTask = () => {
 		setTasks((prev) => [
 			...prev,
 			{
 				taskTitle: "",
-				taskStatus: "on hold",
 				taskMember: "",
-				timeSpentRecords: [],
+				taskStatus: "on hold",
 			},
 		]);
 	};
 
-	const updateTask = (index: number, field: keyof Task, value: any) => {
-		const updated = [...tasks];
-
-		updated[index] = {
-			...updated[index],
-			[field]: value,
-		};
-
-		setTasks(updated);
+	const updateTask = (
+		index: number,
+		field: keyof TaskForm,
+		value: string,
+	) => {
+		setTasks((prev) => {
+			const copy = [...prev];
+			copy[index] = { ...copy[index], [field]: value };
+			return copy;
+		});
 	};
 
 	const removeTask = (index: number) => {
 		setTasks((prev) => prev.filter((_, i) => i !== index));
 	};
 
+	/* =========================
+	   SUBMIT
+	========================= */
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setError(null);
+
+		// normalize empty dates → null
+		const start = startDate.trim() === "" ? null : startDate;
+		const end = endDate.trim() === "" ? null : endDate;
+
+		const parsed = ProjectCreateSchema.safeParse({
+			projectTitle,
+			projectDescription,
+			startDate: start,
+			endDate: end,
+			tasks,
+		});
+
+		if (!parsed.success) {
+			setError(parsed.error.issues.map((i) => i.message).join(", "));
+			return;
+		}
+
+		// derive members ONLY from tasks
+		const projectMembers = [
+			...new Set(
+				tasks
+					.map((t) => t.taskMember)
+					.filter((v): v is string => Boolean(v)),
+			),
+		];
+
+		const payload = {
+			projectTitle,
+			projectDescription,
+			projectStatus: "on hold",
+
+			projectMembers,
+
+			startDate: start ? new Date(start).toISOString() : undefined,
+			endDate: end ? new Date(end).toISOString() : undefined,
+
+			tasks: tasks.map((t) => ({
+				taskTitle: t.taskTitle,
+				taskMember: t.taskMember ? t.taskMember : undefined,
+				taskStatus: "on hold",
+			})),
+
+			comments: [],
+		};
 
 		try {
-			const payload = {
-				projectTitle,
-				projectDescription,
-
-				projectStatus: "on hold",
-
-				projectMembers: [
-					...new Set(tasks.map((t) => t.taskMember).filter(Boolean)),
-				],
-
-				startDate: startDate || undefined,
-				endDate: endDate || undefined,
-
-				tasks: tasks.map((t) => ({
-					taskTitle: t.taskTitle,
-					taskMember: t.taskMember || undefined,
-					taskStatus: "on hold",
-				})),
-
-				comments: [],
-			};
-
-			const response = await fetch(
-				"http://localhost:3000/projects/create",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					credentials: "include",
-					body: JSON.stringify(payload),
+			const res = await fetch("http://localhost:3000/projects/create", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
 				},
-			);
+				credentials: "include",
+				body: JSON.stringify(payload),
+			});
 
-			if (!response.ok) {
-				const err = await response.json();
+			if (!res.ok) {
+				const err = await res.json();
 				console.error(err);
-				throw new Error("Failed to create project");
+				setError("Failed to create project");
+				return;
 			}
 
 			navigate("/admin/projects");
 		} catch (err) {
 			console.error(err);
+			setError("Server error");
 		}
 	};
 
+	/* =========================
+	   UI
+	========================= */
 	return (
-		<form onSubmit={handleSubmit} className="grid grid-cols-2 gap-8">
+		<form onSubmit={handleSubmit} className="form grid grid-cols-2 gap-8">
 			{/* LEFT SIDE */}
-
 			<div className="space-y-4">
 				<h1>Create Project</h1>
 
-				<div>
-					<label>Project Title</label>
+				{error && <p className="text-red-500 font-semibold">{error}</p>}
 
-					<input
-						type="text"
-						value={projectTitle}
-						onChange={(e) => setProjectTitle(e.target.value)}
-					/>
-				</div>
+				<input
+					placeholder="Project title"
+					value={projectTitle}
+					onChange={(e) => setProjectTitle(e.target.value)}
+				/>
 
-				<div>
-					<label>Description</label>
-
-					<textarea
-						value={projectDescription}
-						onChange={(e) => setProjectDescription(e.target.value)}
-					/>
-				</div>
+				<textarea
+					placeholder="Description"
+					value={projectDescription}
+					onChange={(e) => setProjectDescription(e.target.value)}
+				/>
 
 				<div className="flex gap-4">
-					<div>
-						<label>Start Date</label>
+					<input
+						type="date"
+						value={startDate}
+						onChange={(e) => setStartDate(e.target.value)}
+					/>
 
-						<input
-							type="date"
-							value={startDate}
-							onChange={(e) => setStartDate(e.target.value)}
-						/>
-					</div>
-
-					<div>
-						<label>End Date</label>
-
-						<input
-							type="date"
-							value={endDate}
-							onChange={(e) => setEndDate(e.target.value)}
-						/>
-					</div>
+					<input
+						type="date"
+						value={endDate}
+						onChange={(e) => setEndDate(e.target.value)}
+					/>
 				</div>
 			</div>
 
 			{/* RIGHT SIDE */}
-
 			<div>
-				<div className="flex justify-between mb-4">
-					<h2>Tasks</h2>
+				<button type="button" onClick={addTask}>
+					Add Task
+				</button>
 
-					<button type="button" onClick={addTask}>
-						Add Task
-					</button>
-				</div>
+				{tasks.map((task, i) => (
+					<div key={i} className="border p-3 mt-2">
+						<input
+							placeholder="Task title"
+							value={task.taskTitle}
+							onChange={(e) =>
+								updateTask(i, "taskTitle", e.target.value)
+							}
+						/>
 
-				{tasks.map((task, index) => (
-					<div key={index} className="border p-4 mb-4">
-						<div>
-							<label>Task Title</label>
+						<select
+							value={task.taskMember}
+							onChange={(e) =>
+								updateTask(i, "taskMember", e.target.value)
+							}
+						>
+							<option value="">Unassigned</option>
 
-							<input
-								type="text"
-								value={task.taskTitle}
-								onChange={(e) =>
-									updateTask(
-										index,
-										"taskTitle",
-										e.target.value,
-									)
-								}
-							/>
-						</div>
+							{users.map((u) => (
+								<option key={u._id} value={u._id}>
+									{u.firstname} {u.lastname}
+								</option>
+							))}
+						</select>
 
-						<div>
-							<label>Assigned User</label>
-
-							<select
-								value={task.taskMember || ""}
-								onChange={(e) =>
-									updateTask(
-										index,
-										"taskMember",
-										e.target.value,
-									)
-								}
-							>
-								<option value="">Select User</option>
-
-								{users.map((user) => (
-									<option key={user._id} value={user._id}>
-										{user.firstname} {user.lastname}
-									</option>
-								))}
-							</select>
-						</div>
-
-						<button type="button" onClick={() => removeTask(index)}>
-							Remove Task
+						<button type="button" onClick={() => removeTask(i)}>
+							Delete
 						</button>
 					</div>
 				))}
 			</div>
 
 			{/* ACTIONS */}
-
 			<div className="col-span-2 flex gap-4">
 				<button type="submit">Create Project</button>
-
 				<button type="button" onClick={() => navigate(-1)}>
 					Cancel
 				</button>

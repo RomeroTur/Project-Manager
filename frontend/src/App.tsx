@@ -13,11 +13,14 @@ import EditProjectPage from "./pages/EditProjectPage";
 import UsersPage from "./pages/UsersPage";
 import UserDetailsPage from "./pages/UserDetailsPage";
 import UserEditPage from "./pages/UserEditPage";
+import CreateUserPage from "./pages/CreateUserPage";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
 import AdminLayout from "./layouts/AdminLayout";
+
+import "./index.css";
 
 function App() {
 	return (
@@ -55,6 +58,10 @@ function App() {
 							<Route
 								path="users/:id"
 								element={<UserDetailsPage />}
+							/>
+							<Route
+								path="users/register"
+								element={<CreateUserPage />}
 							/>
 							<Route
 								path="users/:id/edit"

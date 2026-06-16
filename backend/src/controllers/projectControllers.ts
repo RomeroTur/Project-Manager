@@ -1,8 +1,36 @@
 import { RequestHandler } from "express";
-
 import { Project, ProjectCreateCheckSchema } from "#models";
-
 import { AppError } from "#utils";
+
+/* =========================
+   HELPERS
+========================= */
+
+const safeDate = (value: any): Date | undefined => {
+	if (!value) return undefined;
+
+	const date = new Date(value);
+
+	if (isNaN(date.getTime())) return undefined;
+
+	return date;
+};
+
+const extractMembersFromTasks = (tasks: any[] = []) => {
+	const set = new Set<string>();
+
+	for (const task of tasks) {
+		if (task?.taskMember) {
+			set.add(task.taskMember);
+		}
+	}
+
+	return [...set];
+};
+
+/* =========================
+   GET ALL PROJECTS
+========================= */
 
 const getAllProjects: RequestHandler = async (req, res, next) => {
 	try {
@@ -15,6 +43,10 @@ const getAllProjects: RequestHandler = async (req, res, next) => {
 		next(error);
 	}
 };
+
+/* =========================
+   GET PROJECT BY ID
+========================= */
 
 const getProjectById: RequestHandler = async (req, res, next) => {
 	try {
@@ -36,6 +68,10 @@ const getProjectById: RequestHandler = async (req, res, next) => {
 	}
 };
 
+/* =========================
+   CREATE PROJECT
+========================= */
+
 const createProject: RequestHandler = async (req, res, next) => {
 	try {
 		const validation = ProjectCreateCheckSchema.safeParse(req.body);
@@ -46,8 +82,20 @@ const createProject: RequestHandler = async (req, res, next) => {
 			);
 		}
 
+		const data = validation.data;
+
+		// normalize dates (IMPORTANT FIX)
+		const startDate = safeDate(data.startDate);
+		const endDate = safeDate(data.endDate);
+
+		// derive members ONLY from tasks
+		const projectMembers = extractMembersFromTasks(data.tasks);
+
 		const project = await Project.create({
-			...validation.data,
+			...data,
+			startDate,
+			endDate,
+			projectMembers,
 			createdBy: (req as any).user.userId,
 		});
 
@@ -57,15 +105,33 @@ const createProject: RequestHandler = async (req, res, next) => {
 	}
 };
 
+/* =========================
+   UPDATE PROJECT
+========================= */
+
 const updateProject: RequestHandler = async (req, res, next) => {
 	try {
 		const { id } = req.params;
 
+		const updates = req.body;
+
+		// normalize dates if provided
+		if ("startDate" in updates) {
+			updates.startDate = safeDate(updates.startDate);
+		}
+
+		if ("endDate" in updates) {
+			updates.endDate = safeDate(updates.endDate);
+		}
+
+		// if tasks updated → recalc members
+		if (updates.tasks) {
+			updates.projectMembers = extractMembersFromTasks(updates.tasks);
+		}
+
 		const updated = await Project.findByIdAndUpdate(
 			id,
-			{
-				$set: req.body,
-			},
+			{ $set: updates },
 			{
 				new: true,
 				runValidators: true,
@@ -81,6 +147,10 @@ const updateProject: RequestHandler = async (req, res, next) => {
 		next(error);
 	}
 };
+
+/* =========================
+   DELETE PROJECT
+========================= */
 
 const deleteProject: RequestHandler = async (req, res, next) => {
 	try {

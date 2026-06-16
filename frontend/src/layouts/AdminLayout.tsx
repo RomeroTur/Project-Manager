@@ -27,9 +27,9 @@ const AdminLayout = () => {
 				</div>
 			</header>
 
-			<main>
+			<main className="flex">
 				<aside>
-					<nav className="flex gap-4">
+					<nav className="flex flex-col gap-4">
 						<Link to="/admin">Dashboard</Link>
 
 						<Link to="/admin/projects">Projects</Link>

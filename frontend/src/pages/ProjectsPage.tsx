@@ -6,75 +6,69 @@ import type { Project } from "../types/Project";
 const ProjectsPage = () => {
 	const [projects, setProjects] = useState<Project[]>([]);
 
-	const [loading, setLoading] = useState(true);
-
 	useEffect(() => {
-		const loadProjects = async () => {
-			try {
-				const response = await fetch("http://localhost:3000/projects", {
-					credentials: "include",
-				});
-
-				const data = await response.json();
-
-				setProjects(data);
-			} catch (err) {
-				console.error(err);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		loadProjects();
-	}, []);
-
-	const handleDelete = async (id: string) => {
-		const confirmed = window.confirm("Delete this project?");
-
-		if (!confirmed) return;
-
-		try {
-			await fetch(`http://localhost:3000/projects/${id}`, {
-				method: "DELETE",
+		const load = async () => {
+			const res = await fetch("http://localhost:3000/projects", {
 				credentials: "include",
 			});
 
-			setProjects((prev) => prev.filter((project) => project._id !== id));
-		} catch (err) {
-			console.error(err);
-		}
-	};
+			const data = await res.json();
+			setProjects(data);
+		};
 
-	if (loading) {
-		return <p>Loading projects...</p>;
-	}
+		load();
+	}, []);
+
+	const getDeadline = (start?: string, end?: string) => {
+		if (!end) return null;
+
+		const startTime = start
+			? new Date(start).getTime()
+			: new Date().getTime();
+		const endTime = new Date(end).getTime();
+
+		return Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
+	};
 
 	return (
 		<div>
-			<div className="flex justify-between mb-4">
-				<h1>Projects</h1>
+			<h1>Projects</h1>
 
-				<Link to="/admin/projects/create">Create Project</Link>
-			</div>
+			<Link
+				to="/admin/projects/create"
+				className="px-3 py-1 border rounded"
+			>
+				Create Project
+			</Link>
 
-			{projects.length === 0 && <p>No projects available.</p>}
+			{projects.map((p) => (
+				<div key={p._id} className="border p-4 mb-4">
+					<h2>{p.projectTitle}</h2>
 
-			{projects.map((project) => (
-				<div key={project._id} className="border p-4 mb-4">
-					<h2>{project.title}</h2>
+					<p>{p.projectDescription}</p>
 
-					<p>{project.description}</p>
+					<p>
+						Start:{" "}
+						{p.startDate
+							? new Date(p.startDate).toLocaleDateString()
+							: "Not set"}
+					</p>
 
-					<div className="flex gap-2 mt-2">
-						<Link to={`/admin/projects/${project._id}`}>View</Link>
+					<p>
+						End:{" "}
+						{p.endDate
+							? new Date(p.endDate).toLocaleDateString()
+							: "Not set"}
+					</p>
 
-						<Link to={`/admin/projects/${project._id}/edit`}>
-							Edit
-						</Link>
+					<p>
+						Deadline:{" "}
+						{getDeadline(p.startDate, p.endDate) ?? "Not set"} days
+					</p>
 
-						<button onClick={() => handleDelete(project._id)}>
-							Delete
-						</button>
+					<div className="flex gap-3 mt-2">
+						<Link to={`/admin/projects/${p._id}`}>View</Link>
+						<Link to={`/admin/projects/${p._id}/edit`}>Edit</Link>
 					</div>
 				</div>
 			))}

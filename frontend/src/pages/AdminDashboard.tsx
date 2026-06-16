@@ -63,8 +63,6 @@ const AdminDashboard = () => {
 
 	return (
 		<div className="grid grid-cols-2 gap-8">
-			{/* PROJECTS */}
-
 			<div>
 				<h2 className="text-2xl font-bold mb-4">Projects</h2>
 
@@ -111,11 +109,15 @@ const AdminDashboard = () => {
 						>
 							View
 						</Link>
+						<Link
+							to={`/admin/projects/${project._id}/edit`}
+							className="inline-block mt-2"
+						>
+							Edit
+						</Link>
 					</div>
 				))}
 			</div>
-
-			{/* USERS */}
 
 			<div>
 				<h2 className="text-2xl font-bold mb-4">Users</h2>

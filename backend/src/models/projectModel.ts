@@ -12,27 +12,22 @@ const TimeSpentRecordSchema = new Schema(
 			ref: "User",
 			required: true,
 		},
-
 		date: {
 			type: Date,
 			required: true,
 		},
-
 		hours: {
 			type: Number,
 			required: true,
 			default: 0,
 		},
-
 		minutes: {
 			type: Number,
 			required: true,
 			default: 0,
 		},
 	},
-	{
-		_id: false,
-	},
+	{ _id: false },
 );
 
 /* =========================
@@ -65,9 +60,7 @@ const TaskSchema = new Schema(
 
 		timeSpentRecords: [TimeSpentRecordSchema],
 	},
-	{
-		_id: true,
-	},
+	{ _id: true },
 );
 
 /* =========================
@@ -76,30 +69,12 @@ const TaskSchema = new Schema(
 
 const CommentSchema = new Schema(
 	{
-		title: {
-			type: String,
-			required: true,
-		},
-
-		author: {
-			type: Schema.Types.ObjectId,
-			ref: "User",
-			required: true,
-		},
-
-		timestamp: {
-			type: Date,
-			default: Date.now,
-		},
-
-		comment: {
-			type: String,
-			required: true,
-		},
+		title: { type: String, required: true },
+		author: { type: Schema.Types.ObjectId, ref: "User", required: true },
+		timestamp: { type: Date, default: Date.now },
+		comment: { type: String, required: true },
 	},
-	{
-		_id: true,
-	},
+	{ _id: true },
 );
 
 /* =========================
@@ -108,10 +83,7 @@ const CommentSchema = new Schema(
 
 const ProjectSchema = new Schema(
 	{
-		projectTitle: {
-			type: String,
-			required: true,
-		},
+		projectTitle: { type: String, required: true },
 
 		projectDescription: {
 			type: String,
@@ -139,39 +111,30 @@ const ProjectSchema = new Schema(
 
 		startDate: {
 			type: Date,
+			required: false,
 		},
 
 		endDate: {
 			type: Date,
+			required: false,
 		},
 
-		/*taskDescription: {
-			type: String,
-		},*/
-
 		tasks: [TaskSchema],
-
 		comments: [CommentSchema],
 	},
-	{
-		timestamps: true,
-	},
+	{ timestamps: true },
 );
 
 const Project = model("Project", ProjectSchema, "projects");
 
 /* =========================
-   ZOD
+   ZOD (CLEAN + STRICT INPUT RULES)
 ========================= */
 
 const ProjectCreateCheckSchema = z.object({
-	projectTitle: z
-		.string()
-		.min(3, "Project title must contain at least 3 characters"),
+	projectTitle: z.string().min(3),
 
 	projectDescription: z.string().optional(),
-
-	// default: on hold?
 
 	projectStatus: z
 		.enum(["in process", "on hold", "cancelled", "completed"])
@@ -179,18 +142,28 @@ const ProjectCreateCheckSchema = z.object({
 
 	projectMembers: z.array(z.string()).optional(),
 
-	//createdBy: z.string(),
+	startDate: z
+		.string()
+		.optional()
+		.transform((v) => (v ? new Date(v) : undefined)),
 
-	startDate: z.coerce.date().optional(),
-
-	endDate: z.coerce.date().optional(),
+	endDate: z
+		.string()
+		.optional()
+		.transform((v) => (v ? new Date(v) : undefined)),
 
 	tasks: z
 		.array(
 			z.object({
 				taskTitle: z.string().min(1),
 
-				taskMember: z.string().optional(),
+				// IMPORTANT FIX:
+				// only real strings allowed, no null, no ""
+				taskMember: z
+					.string()
+					.trim()
+					.optional()
+					.transform((v) => (v === "" ? undefined : v)),
 
 				taskStatus: z
 					.enum(["in process", "on hold", "cancelled", "completed"])
@@ -203,9 +176,7 @@ const ProjectCreateCheckSchema = z.object({
 		.array(
 			z.object({
 				title: z.string(),
-
 				author: z.string(),
-
 				comment: z.string(),
 			}),
 		)

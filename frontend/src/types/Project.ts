@@ -11,11 +11,17 @@ export type TimeSpentRecord = {
 	minutes: number;
 };
 
+export type UserShort = {
+	_id: string;
+	firstname: string;
+	lastname: string;
+};
+
 export type Task = {
 	_id?: string;
 	taskTitle: string;
 	taskDescription?: string;
-	taskMember?: string;
+	taskMember?: string | UserShort;
 	taskStatus: ProjectStatus;
 	timeSpentTotal?: string;
 	timeSpentRecords: TimeSpentRecord[];
@@ -34,7 +40,7 @@ export type Project = {
 	projectTitle: string;
 	projectDescription?: string;
 	projectStatus: ProjectStatus;
-	projectMembers: string[];
+	projectMembers: (string | UserShort)[];
 	createdBy: string;
 	startDate?: string;
 	endDate?: string;

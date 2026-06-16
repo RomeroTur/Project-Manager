@@ -18,18 +18,20 @@ const UsersPage = () => {
 		loadUsers();
 	}, []);
 
-	const handleDelete = async (id: string) => {
+	/*const handleDelete = async (id: string) => {
 		await fetch(`http://localhost:3000/users/${id}`, {
 			method: "DELETE",
 			credentials: "include",
 		});
 
 		setUsers((prev) => prev.filter((u) => u._id !== id));
-	};
+	};*/
 
 	return (
 		<div>
 			<h1>Users</h1>
+
+			<Link to="/admin/users/register">Register User</Link>
 
 			{users.map((user) => (
 				<div key={user._id}>
@@ -44,9 +46,9 @@ const UsersPage = () => {
 
 						<Link to={`/admin/users/${user._id}/edit`}>Edit</Link>
 
-						<button onClick={() => handleDelete(user._id)}>
+						{/*<button onClick={() => handleDelete(user._id)}>
 							Delete
-						</button>
+						</button>*/}
 					</div>
 				</div>
 			))}

@@ -1,15 +1,14 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const UserEditPage = () => {
-	const { id } = useParams();
-
+const CreateUserPage = () => {
 	const navigate = useNavigate();
 
 	const [firstname, setFirstname] = useState("");
 	const [lastname, setLastname] = useState("");
 
 	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
 
 	const [role, setRole] = useState<"admin" | "user">("user");
 
@@ -22,82 +21,44 @@ const UserEditPage = () => {
 
 	const [error, setError] = useState("");
 
-	useEffect(() => {
-		const loadUser = async () => {
-			try {
-				const response = await fetch(
-					`http://localhost:3000/users/${id}`,
-					{
-						credentials: "include",
-					},
-				);
-
-				if (!response.ok) {
-					throw new Error("Failed to load user");
-				}
-
-				const user = await response.json();
-
-				setFirstname(user.firstname ?? "");
-				setLastname(user.lastname ?? "");
-
-				setEmail(user.email ?? "");
-
-				setRole(user.role ?? "user");
-
-				setSkills(user.skills?.join(", ") ?? "");
-
-				setBirthday(
-					user.personal?.birthday
-						? new Date(user.personal.birthday)
-								.toISOString()
-								.split("T")[0]
-						: "",
-				);
-
-				setTel(user.personal?.tel ?? "");
-				setAddress(user.personal?.address ?? "");
-				setDescription(user.personal?.description ?? "");
-			} catch (err) {
-				console.error(err);
-			}
-		};
-
-		loadUser();
-	}, [id]);
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		try {
-			const response = await fetch(`http://localhost:3000/users/${id}`, {
-				method: "PATCH",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				credentials: "include",
-				body: JSON.stringify({
-					firstname,
-					lastname,
-					email,
-					role,
-
-					skills: skills
-						.split(",")
-						.map((skill) => skill.trim())
-						.filter(Boolean),
-
-					personal: {
-						birthday: birthday || undefined,
-						tel,
-						address,
-						description,
+			const response = await fetch(
+				"http://localhost:3000/users/register",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
 					},
-				}),
-			});
+					credentials: "include",
+					body: JSON.stringify({
+						firstname,
+						lastname,
+						email,
+						password,
+						role,
+
+						skills: skills
+							.split(",")
+							.map((s) => s.trim())
+							.filter(Boolean),
+
+						personal: {
+							birthday: birthday || undefined,
+							tel,
+							address,
+							description,
+						},
+					}),
+				},
+			);
+
+			const data = await response.json();
 
 			if (!response.ok) {
-				throw new Error("Failed to update user");
+				throw new Error(data.message || "Failed to create user");
 			}
 
 			navigate("/admin/users");
@@ -111,12 +72,12 @@ const UserEditPage = () => {
 	return (
 		<form onSubmit={handleSubmit} className="form grid grid-cols-2 gap-8">
 			<div className="space-y-4">
-				<h1>Edit User</h1>
+				<h1>Create User</h1>
 
 				<div>
 					<label>First Name</label>
-
 					<input
+						type="text"
 						value={firstname}
 						onChange={(e) => setFirstname(e.target.value)}
 					/>
@@ -124,8 +85,8 @@ const UserEditPage = () => {
 
 				<div>
 					<label>Last Name</label>
-
 					<input
+						type="text"
 						value={lastname}
 						onChange={(e) => setLastname(e.target.value)}
 					/>
@@ -133,11 +94,19 @@ const UserEditPage = () => {
 
 				<div>
 					<label>Email</label>
-
 					<input
 						type="email"
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
+					/>
+				</div>
+
+				<div>
+					<label>Password</label>
+					<input
+						type="password"
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
 					/>
 				</div>
 
@@ -151,18 +120,18 @@ const UserEditPage = () => {
 						}
 					>
 						<option value="user">User</option>
-
 						<option value="admin">Admin</option>
 					</select>
 				</div>
 
 				<div>
-					<label>Skills</label>
+					<label>Skills (comma separated)</label>
 
 					<input
+						type="text"
 						value={skills}
 						onChange={(e) => setSkills(e.target.value)}
-						placeholder="React, Node, TypeScript"
+						placeholder="React, TypeScript, Node"
 					/>
 				</div>
 			</div>
@@ -184,6 +153,7 @@ const UserEditPage = () => {
 					<label>Telephone</label>
 
 					<input
+						type="text"
 						value={tel}
 						onChange={(e) => setTel(e.target.value)}
 					/>
@@ -193,6 +163,7 @@ const UserEditPage = () => {
 					<label>Address</label>
 
 					<input
+						type="text"
 						value={address}
 						onChange={(e) => setAddress(e.target.value)}
 					/>
@@ -208,10 +179,14 @@ const UserEditPage = () => {
 				</div>
 			</div>
 
-			<div className="col-span-2 flex gap-4">
-				<button type="submit">Save Changes</button>
+			<div className="col-span-2">
+				<button type="submit">Create User</button>
 
-				<button type="button" onClick={() => navigate(-1)}>
+				<button
+					type="button"
+					onClick={() => navigate(-1)}
+					style={{ marginLeft: "1rem" }}
+				>
 					Cancel
 				</button>
 			</div>
@@ -225,4 +200,4 @@ const UserEditPage = () => {
 	);
 };
 
-export default UserEditPage;
+export default CreateUserPage;

@@ -45,10 +45,6 @@ const LoginPage = () => {
 				throw new Error(data.message ?? "Invalid credentials");
 			}
 
-			/*
-			 * IMPORTANT:
-			 * Refresh user from cookie
-			 */
 			await login();
 
 			const meResponse = await fetch("http://localhost:3000/users/me", {
@@ -75,7 +71,7 @@ const LoginPage = () => {
 		<div>
 			<h1>Login</h1>
 
-			<form onSubmit={handleSubmit}>
+			<form onSubmit={handleSubmit} className="form">
 				<input
 					type="email"
 					placeholder="Email"

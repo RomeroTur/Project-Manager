@@ -187,9 +187,11 @@ export const registerUser: RequestHandler = async (req, res, next) => {
 			available: true,
 		});
 
+		const safeUser = await User.findById(user._id).select("-password");
+
 		res.status(201).json({
 			message: "User created",
-			user,
+			user: safeUser,
 		});
 	} catch (err) {
 		next(err);

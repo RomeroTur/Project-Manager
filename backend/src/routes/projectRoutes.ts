@@ -17,6 +17,6 @@ projectRouter.get("/", getAllProjects);
 projectRouter.get("/:id", getProjectById);
 projectRouter.post("/create", authMiddleware, createProject);
 projectRouter.delete("/:id", deleteProject);
-projectRouter.put("/:id", updateProject);
+projectRouter.patch("/:id", updateProject);
 
 export { projectRouter };
