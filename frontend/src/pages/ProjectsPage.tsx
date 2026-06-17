@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { Link } from "react-router-dom";
+import type { Project } from "../types/Project";
 
 const ProjectsPage = () => {
 	const { user } = useAuth();
-	const [projects, setProjects] = useState<any[]>([]);
+	const [projects, setProjects] = useState<Project[]>([]);
 
 	useEffect(() => {
 		const load = async () => {
@@ -24,32 +25,105 @@ const ProjectsPage = () => {
 		if (user) load();
 	}, [user]);
 
+	const calculateDays = (start?: string, end?: string) => {
+		if (!start || !end) return null;
+
+		const s = new Date(start).getTime();
+		const e = new Date(end).getTime();
+
+		return Math.ceil((e - s) / (1000 * 60 * 60 * 24));
+	};
+
 	return (
 		<div>
-			<h1>Projects</h1>
+			<h1 className="text-2xl font-bold mb-4">Projects</h1>
 
-			{projects.map((project) => (
-				<div key={project._id} className="border p-3 mb-3">
-					<h3>{project.projectTitle}</h3>
-					<p>Status: {project.projectStatus}</p>
+			{projects.map((project) => {
+				const deadline = calculateDays(
+					project.startDate,
+					project.endDate,
+				);
 
-					{/* ADMIN */}
-					{user?.role === "admin" ? (
-						<>
-							<Link to={`/admin/projects/${project._id}`}>
-								View
-							</Link>
-							<Link to={`/admin/projects/${project._id}/edit`}>
-								Edit
-							</Link>
-						</>
-					) : (
-						<>
-							<Link to={`/projects/${project._id}`}>View</Link>
-						</>
-					)}
-				</div>
-			))}
+				return (
+					<div key={project._id} className="border p-4 mb-4 rounded">
+						{/* TITLE */}
+						<h2 className="text-lg font-bold">
+							{project.projectTitle}
+						</h2>
+
+						{/* DESCRIPTION */}
+						<p className="text-gray-700">
+							{project.projectDescription || "No description"}
+						</p>
+
+						{/* DATES */}
+						<p>
+							Start:{" "}
+							{project.startDate
+								? new Date(
+										project.startDate,
+									).toLocaleDateString()
+								: "-"}
+						</p>
+
+						<p>
+							End:{" "}
+							{project.endDate
+								? new Date(project.endDate).toLocaleDateString()
+								: "-"}
+						</p>
+
+						{/* DEADLINE */}
+						{deadline !== null && (
+							<p className="font-semibold">
+								Deadline: {deadline} days
+							</p>
+						)}
+
+						{/* TASKS */}
+						<div className="mt-3">
+							<h3 className="font-semibold">Tasks</h3>
+
+							{project.tasks?.length ? (
+								project.tasks.map((task) => (
+									<div
+										key={task._id}
+										className="border p-2 mt-2"
+									>
+										<p>
+											<strong>{task.taskTitle}</strong>
+										</p>
+										<p>Status: {task.taskStatus}</p>
+									</div>
+								))
+							) : (
+								<p>No tasks</p>
+							)}
+						</div>
+
+						{/* ACTIONS */}
+						<div className="flex gap-3 mt-4">
+							{user?.role === "admin" ? (
+								<>
+									<Link to={`/admin/projects/${project._id}`}>
+										View
+									</Link>
+
+									<Link
+										to={`/admin/projects/${project._id}/edit`}
+									>
+										Edit
+									</Link>
+								</>
+							) : (
+								<Link to={`/projects/${project._id}`}>
+									View
+								</Link>
+							)}
+						</div>
+					</div>
+				);
+			})}
 		</div>
 	);
 };

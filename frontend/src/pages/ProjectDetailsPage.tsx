@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 import type { Project } from "../types/Project";
 
 const ProjectDetailsPage = () => {
 	const { id } = useParams();
-
+	const { user } = useAuth();
 	const [project, setProject] = useState<Project | null>(null);
 	const [loading, setLoading] = useState(true);
 
@@ -133,8 +134,17 @@ const ProjectDetailsPage = () => {
 			</div>
 
 			<div className="flex gap-3">
-				<Link to={`/admin/projects/${project._id}/edit`}>Edit</Link>
-				<Link to="/admin/projects">Back</Link>
+				{user?.role === "admin" && (
+					<Link to={`/admin/projects/${project._id}/edit`}>Edit</Link>
+				)}
+
+				<Link
+					to={
+						user?.role === "admin" ? "/admin/projects" : "/projects"
+					}
+				>
+					Back
+				</Link>
 			</div>
 		</div>
 	);
