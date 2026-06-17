@@ -129,13 +129,31 @@ const EditProjectPage = () => {
 						"Content-Type": "application/json",
 					},
 					credentials: "include",
-					body: JSON.stringify({
+
+					/*body: JSON.stringify({
 						projectTitle,
 						projectDescription,
 						projectStatus,
 						startDate: startDate || null,
 						endDate: endDate || null,
 						tasks,
+					}),*/
+
+					body: JSON.stringify({
+						projectTitle,
+						projectDescription,
+						projectStatus,
+						startDate: startDate || null,
+						endDate: endDate || null,
+
+						tasks: tasks.map((task) => ({
+							...task,
+
+							taskMember:
+								typeof task.taskMember === "string"
+									? task.taskMember || undefined
+									: task.taskMember?._id || undefined,
+						})),
 					}),
 				},
 			);

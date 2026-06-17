@@ -5,6 +5,12 @@ export type UserPersonal = {
 	description?: string;
 };
 
+export type AssignedTask = {
+	projectTitle: string;
+	taskTitle: string;
+	taskStatus: string;
+};
+
 export type User = {
 	_id: string;
 	firstname: string;
@@ -14,4 +20,5 @@ export type User = {
 	available: boolean;
 	skills: string[];
 	personal: UserPersonal;
+	assignedTasks?: AssignedTask[];
 };

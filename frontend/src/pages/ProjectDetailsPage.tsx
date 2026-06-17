@@ -32,7 +32,8 @@ const ProjectDetailsPage = () => {
 	if (loading) return <p>Loading...</p>;
 	if (!project) return <p>Project not found</p>;
 
-	const startTime = project.startDate
+	{
+		/*const startTime = project.startDate
 		? new Date(project.startDate).getTime()
 		: new Date().getTime();
 
@@ -43,7 +44,17 @@ const ProjectDetailsPage = () => {
 	const deadlineDays =
 		endTime !== null
 			? Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24))
-			: null;
+			: null;*/
+	}
+
+	let deadlineDays: number | null = null;
+
+	if (project.startDate && project.endDate) {
+		const startTime = new Date(project.startDate).getTime();
+		const endTime = new Date(project.endDate).getTime();
+
+		deadlineDays = Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
+	}
 
 	return (
 		<div className="space-y-6">
@@ -71,10 +82,16 @@ const ProjectDetailsPage = () => {
 						: "Not set"}
 				</p>
 
-				<p>
+				{/*<p>
 					<strong>Deadline:</strong>{" "}
 					{deadlineDays !== null ? `${deadlineDays} days` : "Not set"}
-				</p>
+				</p>*/}
+
+				{deadlineDays !== null && (
+					<p>
+						<strong>Deadline:</strong> {deadlineDays} days
+					</p>
+				)}
 
 				<p>
 					<strong>Members:</strong>{" "}

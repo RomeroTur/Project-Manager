@@ -20,11 +20,11 @@ const ProjectsPage = () => {
 	}, []);
 
 	const getDeadline = (start?: string, end?: string) => {
-		if (!end) return null;
+		if (!start || !end) {
+			return null;
+		}
 
-		const startTime = start
-			? new Date(start).getTime()
-			: new Date().getTime();
+		const startTime = new Date(start).getTime();
 		const endTime = new Date(end).getTime();
 
 		return Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
@@ -48,6 +48,10 @@ const ProjectsPage = () => {
 					<p>{p.projectDescription}</p>
 
 					<p>
+						<strong>Status:</strong> {p.projectStatus}
+					</p>
+
+					<p>
 						Start:{" "}
 						{p.startDate
 							? new Date(p.startDate).toLocaleDateString()
@@ -61,10 +65,44 @@ const ProjectsPage = () => {
 							: "Not set"}
 					</p>
 
-					<p>
-						Deadline:{" "}
-						{getDeadline(p.startDate, p.endDate) ?? "Not set"} days
-					</p>
+					{getDeadline(p.startDate, p.endDate) !== null && (
+						<p>
+							Deadline: in {getDeadline(p.startDate, p.endDate)}{" "}
+							days
+						</p>
+					)}
+
+					{p.tasks.length > 0 && (
+						<div className="mt-4">
+							<h3 className="font-semibold">Tasks</h3>
+
+							{p.tasks.map((task) => (
+								<div
+									key={task._id ?? task.taskTitle}
+									className="border p-2 mt-2"
+								>
+									<p>
+										<strong>Task:</strong> {task.taskTitle}
+									</p>
+
+									<p>
+										<strong>Status:</strong>{" "}
+										{task.taskStatus}
+									</p>
+
+									<p>
+										<strong>Member:</strong>{" "}
+										{!task.taskMember
+											? "Member not set yet"
+											: typeof task.taskMember ===
+												  "string"
+												? task.taskMember
+												: `${task.taskMember.firstname} ${task.taskMember.lastname}`}
+									</p>
+								</div>
+							))}
+						</div>
+					)}
 
 					<div className="flex gap-3 mt-2">
 						<Link to={`/admin/projects/${p._id}`}>View</Link>

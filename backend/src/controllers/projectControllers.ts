@@ -28,6 +28,36 @@ const extractMembersFromTasks = (tasks: any[] = []) => {
 	return [...set];
 };
 
+const calculateUserAvailability = (projects: any[]) => {
+	const userBusyMap = new Map<string, boolean>();
+
+	for (const project of projects) {
+		for (const task of project.tasks || []) {
+			if (!task?.taskMember) continue;
+
+			const userId =
+				typeof task.taskMember === "string"
+					? task.taskMember
+					: task.taskMember?._id?.toString?.() ||
+						task.taskMember.toString();
+
+			const isInProcess = task.taskStatus === "in process";
+
+			// IMPORTANT: once busy → always busy
+			if (isInProcess) {
+				userBusyMap.set(userId, false); // NOT available
+			} else {
+				// only set available if not already marked busy
+				if (!userBusyMap.has(userId)) {
+					userBusyMap.set(userId, true);
+				}
+			}
+		}
+	}
+
+	return userBusyMap;
+};
+
 /* =========================
    GET ALL PROJECTS
 ========================= */
@@ -36,7 +66,8 @@ const getAllProjects: RequestHandler = async (req, res, next) => {
 	try {
 		const projects = await Project.find()
 			.populate("projectMembers", "firstname lastname")
-			.populate("createdBy", "firstname lastname");
+			.populate("createdBy", "firstname lastname")
+			.populate("tasks.taskMember", "firstname lastname");
 
 		res.status(200).json(projects);
 	} catch (error) {
@@ -99,6 +130,19 @@ const createProject: RequestHandler = async (req, res, next) => {
 			createdBy: (req as any).user.userId,
 		});
 
+		// recompute availability for all affected users
+		const allProjects = await Project.find();
+
+		const availabilityMap = calculateUserAvailability(allProjects);
+
+		const User = (await import("#models")).User;
+
+		for (const [userId, available] of availabilityMap.entries()) {
+			await User.findByIdAndUpdate(userId, {
+				available,
+			});
+		}
+
 		res.status(201).json(project);
 	} catch (error) {
 		next(error);
@@ -140,6 +184,17 @@ const updateProject: RequestHandler = async (req, res, next) => {
 
 		if (!updated) {
 			return next(new AppError("Project not found", 404));
+		}
+
+		const allProjects = await Project.find();
+		const availabilityMap = calculateUserAvailability(allProjects);
+
+		const User = (await import("#models")).User;
+
+		for (const [userId, available] of availabilityMap.entries()) {
+			await User.findByIdAndUpdate(userId, {
+				available,
+			});
 		}
 
 		res.status(200).json(updated);
