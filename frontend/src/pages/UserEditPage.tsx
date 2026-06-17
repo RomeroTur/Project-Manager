@@ -192,7 +192,7 @@ const UserEditPage = () => {
 				<div>
 					<label>Address</label>
 
-					<input
+					<textarea
 						value={address}
 						onChange={(e) => setAddress(e.target.value)}
 					/>

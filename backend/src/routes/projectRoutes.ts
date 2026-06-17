@@ -2,6 +2,7 @@ import express from "express";
 import { Router } from "express";
 import {
 	getAllProjects,
+	getMyProjects,
 	getProjectById,
 	deleteProject,
 	createProject,
@@ -14,6 +15,7 @@ const projectRouter = Router();
 projectRouter.use(express.json());
 
 projectRouter.get("/", getAllProjects);
+projectRouter.get("/my-projects", authMiddleware, getMyProjects);
 projectRouter.get("/:id", getProjectById);
 projectRouter.post("/create", authMiddleware, createProject);
 projectRouter.delete("/:id", deleteProject);

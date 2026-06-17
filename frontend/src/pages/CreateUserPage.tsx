@@ -162,8 +162,7 @@ const CreateUserPage = () => {
 				<div>
 					<label>Address</label>
 
-					<input
-						type="text"
+					<textarea
 						value={address}
 						onChange={(e) => setAddress(e.target.value)}
 					/>

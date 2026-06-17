@@ -5,6 +5,8 @@ import { User, UserRegisterCheckSchema } from "#models";
 import { z } from "zod";
 import { AppError } from "#utils";
 
+import { Project } from "#models";
+
 /* -----------------------------
    GET CURRENT USER
 ------------------------------*/
@@ -45,7 +47,29 @@ export const getUserById: RequestHandler = async (req, res, next) => {
 			return next(new AppError("User not found", 404));
 		}
 
-		res.status(200).json(user);
+		const projects = await Project.find({
+			"tasks.taskMember": user._id,
+		});
+
+		const assignedTasks = projects.flatMap((project) =>
+			project.tasks
+				.filter(
+					(task) =>
+						task.taskMember?.toString() === user._id.toString(),
+				)
+				.map((task) => ({
+					projectId: project._id,
+					projectTitle: project.projectTitle,
+					taskTitle: task.taskTitle,
+					taskStatus: task.taskStatus,
+					timeSpentTotal: task.timeSpentTotal,
+				})),
+		);
+
+		res.status(200).json({
+			...user.toObject(),
+			assignedTasks,
+		});
 	} catch (err) {
 		next(new AppError("Failed to get user", 500));
 	}

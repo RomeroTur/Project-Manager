@@ -6,9 +6,11 @@ export type UserPersonal = {
 };
 
 export type AssignedTask = {
+	projectId: string;
 	projectTitle: string;
 	taskTitle: string;
 	taskStatus: string;
+	timeSpentTotal?: string;
 };
 
 export type User = {

@@ -11,6 +11,7 @@ export {
 
 export {
 	getAllProjects,
+	getMyProjects,
 	getProjectById,
 	deleteProject,
 	createProject,

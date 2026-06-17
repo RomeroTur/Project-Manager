@@ -76,6 +76,27 @@ const getAllProjects: RequestHandler = async (req, res, next) => {
 };
 
 /* =========================
+   GET MY PROJECTS
+========================= */
+
+const getMyProjects: RequestHandler = async (req: any, res, next) => {
+	try {
+		const userId = req.user.userId;
+
+		const projects = await Project.find({
+			"tasks.taskMember": userId,
+		})
+			.populate("projectMembers", "firstname lastname")
+			.populate("createdBy", "firstname lastname")
+			.populate("tasks.taskMember", "firstname lastname");
+
+		res.status(200).json(projects);
+	} catch (error) {
+		next(error);
+	}
+};
+
+/* =========================
    GET PROJECT BY ID
 ========================= */
 
@@ -227,6 +248,7 @@ const deleteProject: RequestHandler = async (req, res, next) => {
 
 export {
 	getAllProjects,
+	getMyProjects,
 	getProjectById,
 	createProject,
 	updateProject,
