@@ -18,7 +18,8 @@ import CreateUserPage from "./pages/CreateUserPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
-import AdminLayout from "./layouts/AdminLayout";
+//import AdminLayout from "./layouts/AdminLayout";
+import AppLayout from "./layouts/AppLayout";
 
 import "./index.css";
 
@@ -27,46 +28,62 @@ function App() {
 		<BrowserRouter>
 			<Routes>
 				<Route path="/" element={<Navigate to="/login" replace />} />
-
 				<Route path="/login" element={<LoginPage />} />
 
 				<Route element={<ProtectedRoute />}>
-					<Route path="/dashboard" element={<UserDashboard />} />
+					{/* 👇 SHARED LAYOUT FOR EVERY LOGGED USER */}
+					<Route element={<AppLayout />}>
+						{/* USER ROUTES */}
+						<Route path="/dashboard" element={<UserDashboard />} />
 
-					<Route element={<AdminRoute />}>
-						<Route path="/admin" element={<AdminLayout />}>
-							<Route index element={<AdminDashboard />} />
+						<Route path="/projects" element={<ProjectsPage />} />
+						<Route
+							path="/projects/:id"
+							element={<ProjectDetailsPage />}
+						/>
 
-							<Route path="projects" element={<ProjectsPage />} />
+						<Route path="/users" element={<UsersPage />} />
+						<Route
+							path="/users/:id"
+							element={<UserDetailsPage />}
+						/>
 
-							<Route
-								path="projects/:id"
-								element={<ProjectDetailsPage />}
-							/>
+						{/* ADMIN AREA */}
+						<Route element={<AdminRoute />}>
+							<Route path="/admin">
+								<Route index element={<AdminDashboard />} />
 
-							<Route
-								path="projects/create"
-								element={<CreateProjectPage />}
-							/>
+								<Route
+									path="projects"
+									element={<ProjectsPage />}
+								/>
+								<Route
+									path="projects/:id"
+									element={<ProjectDetailsPage />}
+								/>
+								<Route
+									path="projects/create"
+									element={<CreateProjectPage />}
+								/>
+								<Route
+									path="projects/:id/edit"
+									element={<EditProjectPage />}
+								/>
 
-							<Route
-								path="projects/:id/edit"
-								element={<EditProjectPage />}
-							/>
-
-							<Route path="users" element={<UsersPage />} />
-							<Route
-								path="users/:id"
-								element={<UserDetailsPage />}
-							/>
-							<Route
-								path="users/register"
-								element={<CreateUserPage />}
-							/>
-							<Route
-								path="users/:id/edit"
-								element={<UserEditPage />}
-							/>
+								<Route path="users" element={<UsersPage />} />
+								<Route
+									path="users/:id"
+									element={<UserDetailsPage />}
+								/>
+								<Route
+									path="users/register"
+									element={<CreateUserPage />}
+								/>
+								<Route
+									path="users/:id/edit"
+									element={<UserEditPage />}
+								/>
+							</Route>
 						</Route>
 					</Route>
 				</Route>

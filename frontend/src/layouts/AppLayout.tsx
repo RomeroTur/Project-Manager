@@ -6,10 +6,8 @@ import Header from "../components/Header";
 const AppLayout = () => {
 	return (
 		<div className="flex min-h-screen">
-			{/* Sidebar */}
 			<Sidebar />
 
-			{/* Main area */}
 			<div className="flex-1 flex flex-col">
 				<Header />
 
