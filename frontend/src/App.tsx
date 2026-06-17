@@ -31,7 +31,6 @@ function App() {
 				<Route path="/login" element={<LoginPage />} />
 
 				<Route element={<ProtectedRoute />}>
-					{/* 👇 SHARED LAYOUT FOR EVERY LOGGED USER */}
 					<Route element={<AppLayout />}>
 						{/* USER ROUTES */}
 						<Route path="/dashboard" element={<UserDashboard />} />
@@ -42,13 +41,12 @@ function App() {
 							element={<ProjectDetailsPage />}
 						/>
 
-						<Route path="/users" element={<UsersPage />} />
 						<Route
 							path="/users/:id"
 							element={<UserDetailsPage />}
 						/>
 
-						{/* ADMIN AREA */}
+						{/* ADMIN ROUTES */}
 						<Route element={<AdminRoute />}>
 							<Route path="/admin">
 								<Route index element={<AdminDashboard />} />
@@ -58,10 +56,6 @@ function App() {
 									element={<ProjectsPage />}
 								/>
 								<Route
-									path="projects/:id"
-									element={<ProjectDetailsPage />}
-								/>
-								<Route
 									path="projects/create"
 									element={<CreateProjectPage />}
 								/>
@@ -69,15 +63,19 @@ function App() {
 									path="projects/:id/edit"
 									element={<EditProjectPage />}
 								/>
+								<Route
+									path="projects/:id"
+									element={<ProjectDetailsPage />}
+								/>
 
 								<Route path="users" element={<UsersPage />} />
 								<Route
-									path="users/:id"
-									element={<UserDetailsPage />}
-								/>
-								<Route
 									path="users/register"
 									element={<CreateUserPage />}
+								/>
+								<Route
+									path="users/:id"
+									element={<UserDetailsPage />}
 								/>
 								<Route
 									path="users/:id/edit"

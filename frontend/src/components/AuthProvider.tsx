@@ -1,64 +1,64 @@
-import { useEffect, useState, type ReactNode } from "react";
-
-import { AuthContext } from "../context/AuthContext";
+import { useEffect, useState } from "react";
 import type { User } from "../types/User";
+import { AuthContext } from "../context/AuthContext";
+//import type { AuthContextType } from "../context/auth.types";
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null);
-
 	const [loading, setLoading] = useState(true);
 
-	const login = async () => {
-		const response = await fetch("http://localhost:3000/users/me", {
-			credentials: "include",
-		});
-
-		if (!response.ok) {
-			throw new Error("Failed to load user");
-		}
-
-		const userData = await response.json();
-
-		setUser(userData);
-	};
-
-	const logout = async () => {
+	// GET CURRENT USER
+	const refreshUser = async () => {
 		try {
-			await fetch("http://localhost:3000/users/logout", {
-				method: "POST",
+			const res = await fetch("http://localhost:3000/users/me", {
 				credentials: "include",
 			});
-		} catch (err) {
-			console.error(err);
+
+			if (!res.ok) {
+				setUser(null);
+				return;
+			}
+
+			const data = await res.json();
+			setUser(data);
+		} catch {
+			setUser(null);
 		}
+	};
+
+	// LOGIN
+	const login = async (email: string, password: string) => {
+		const res = await fetch("http://localhost:3000/users/login", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			credentials: "include",
+			body: JSON.stringify({ email, password }),
+		});
+
+		if (!res.ok) {
+			const data = await res.json();
+			throw new Error(data.message || "Login failed");
+		}
+
+		await refreshUser();
+	};
+
+	// LOGOUT
+	const logout = async () => {
+		await fetch("http://localhost:3000/users/logout", {
+			method: "POST",
+			credentials: "include",
+		});
 
 		setUser(null);
 	};
 
+	// INIT
 	useEffect(() => {
-		const checkAuth = async () => {
-			try {
-				const response = await fetch("http://localhost:3000/users/me", {
-					credentials: "include",
-				});
-
-				if (!response.ok) {
-					setUser(null);
-					return;
-				}
-
-				const userData = await response.json();
-
-				setUser(userData);
-			} catch (err) {
-				console.error(err);
-				setUser(null);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		checkAuth();
+		(async () => {
+			await refreshUser();
+			setLoading(false);
+		})();
 	}, []);
 
 	return (
@@ -68,6 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 				loading,
 				login,
 				logout,
+				refreshUser,
 			}}
 		>
 			{children}
