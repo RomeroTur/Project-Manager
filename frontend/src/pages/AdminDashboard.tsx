@@ -82,39 +82,49 @@ const AdminDashboard = () => {
 								? new Date(
 										project.startDate,
 									).toLocaleDateString()
-								: "-"}
+								: "Not set"}
 						</p>
 
 						<p>
 							End:{" "}
 							{project.endDate
 								? new Date(project.endDate).toLocaleDateString()
-								: "-"}
+								: "Not set"}
 						</p>
+
+						{project.startDate && project.endDate && (
+							<p>
+								Deadline:{" "}
+								{calculateDaysLeft(
+									project.startDate,
+									project.endDate,
+								)}{" "}
+								days
+							</p>
+						)}
 
 						<p>
-							Deadline:{" "}
-							{calculateDaysLeft(
-								project.startDate,
-								project.endDate,
-							)}{" "}
-							days
+							Members:{" "}
+							{project.projectMembers?.length
+								? project.projectMembers
+										.map((member) =>
+											typeof member === "string"
+												? member
+												: `${member.firstname} ${member.lastname}`,
+										)
+										.join(", ")
+								: "No members assigned"}
 						</p>
 
-						<p>Members: {project.projectMembers?.length ?? 0}</p>
+						<div className="flex gap-3 mt-3">
+							<Link to={`/admin/projects/${project._id}`}>
+								View
+							</Link>
 
-						<Link
-							to={`/admin/projects/${project._id}`}
-							className="inline-block mt-2"
-						>
-							View
-						</Link>
-						<Link
-							to={`/admin/projects/${project._id}/edit`}
-							className="inline-block mt-2"
-						>
-							Edit
-						</Link>
+							<Link to={`/admin/projects/${project._id}/edit`}>
+								Edit
+							</Link>
+						</div>
 					</div>
 				))}
 			</div>
@@ -136,15 +146,16 @@ const AdminDashboard = () => {
 							Skills:{" "}
 							{user.skills.length > 0
 								? user.skills.join(", ")
-								: "-"}
+								: "None"}
 						</p>
 
-						<Link
-							to={`/admin/users/${user._id}`}
-							className="inline-block mt-2"
-						>
-							View
-						</Link>
+						<div className="flex gap-3 mt-3">
+							<Link to={`/admin/users/${user._id}`}>View</Link>
+
+							<Link to={`/admin/users/${user._id}/edit`}>
+								Edit
+							</Link>
+						</div>
 					</div>
 				))}
 			</div>
