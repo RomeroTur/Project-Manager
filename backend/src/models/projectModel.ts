@@ -12,22 +12,35 @@ const TimeSpentRecordSchema = new Schema(
 			ref: "User",
 			required: true,
 		},
+
+		firstname: {
+			type: String,
+			required: true,
+		},
+
+		lastname: {
+			type: String,
+			required: true,
+		},
+
 		date: {
 			type: Date,
 			required: true,
 		},
+
 		hours: {
 			type: Number,
 			required: true,
 			default: 0,
 		},
+
 		minutes: {
 			type: Number,
 			required: true,
 			default: 0,
 		},
 	},
-	{ _id: false },
+	{ _id: true },
 );
 
 /* =========================
@@ -69,10 +82,36 @@ const TaskSchema = new Schema(
 
 const CommentSchema = new Schema(
 	{
-		title: { type: String, required: true },
-		author: { type: Schema.Types.ObjectId, ref: "User", required: true },
-		timestamp: { type: Date, default: Date.now },
-		comment: { type: String, required: true },
+		title: {
+			type: String,
+			required: true,
+		},
+
+		author: {
+			type: Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
+
+		firstname: {
+			type: String,
+			required: true,
+		},
+
+		lastname: {
+			type: String,
+			required: true,
+		},
+
+		timestamp: {
+			type: Date,
+			default: Date.now,
+		},
+
+		comment: {
+			type: String,
+			required: true,
+		},
 	},
 	{ _id: true },
 );

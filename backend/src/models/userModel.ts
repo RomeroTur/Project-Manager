@@ -1,9 +1,6 @@
 import { Schema, model } from "mongoose";
 import { z } from "zod";
 
-/* -----------------------------
-   MONGOOSE USER SCHEMA
-------------------------------*/
 const UserSchema = new Schema(
 	{
 		firstname: {
