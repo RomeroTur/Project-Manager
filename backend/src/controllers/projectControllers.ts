@@ -55,6 +55,20 @@ const calculateUserAvailability = (projects: any[]) => {
 	return userBusyMap;
 };
 
+const recalculateTaskTime = (task: any) => {
+	let totalMinutes = 0;
+
+	for (const record of task.timeSpentRecords) {
+		totalMinutes += record.hours * 60;
+		totalMinutes += record.minutes;
+	}
+
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+
+	task.timeSpentTotal = `${hours}h ${minutes}m`;
+};
+
 const isAdmin = (req: any) => req.user?.role === "admin";
 
 /* =========================
@@ -244,14 +258,22 @@ const addTimeRecord: RequestHandler = async (req: any, res, next) => {
 			return next(new AppError("Not allowed", 403));
 		}
 
+		const currentUser = await User.findById(req.user.userId);
+
+		if (!currentUser) {
+			return next(new AppError("User not found", 404));
+		}
+
 		task.timeSpentRecords.push({
-			user: req.user.userId,
-			firstname: req.user.firstname,
-			lastname: req.user.lastname,
+			user: currentUser._id,
+			firstname: currentUser.firstname,
+			lastname: currentUser.lastname,
 			date,
 			hours,
 			minutes,
 		});
+
+		recalculateTaskTime(task);
 
 		await project.save();
 
@@ -283,6 +305,8 @@ const updateTimeRecord: RequestHandler = async (req: any, res, next) => {
 		if (hours !== undefined) record.hours = hours;
 		if (minutes !== undefined) record.minutes = minutes;
 
+		recalculateTaskTime(task);
+
 		await project.save();
 
 		res.json(project);
@@ -309,6 +333,9 @@ const deleteTimeRecord: RequestHandler = async (req: any, res, next) => {
 		}
 
 		record.deleteOne();
+
+		recalculateTaskTime(task);
+
 		await project.save();
 
 		res.json(project);

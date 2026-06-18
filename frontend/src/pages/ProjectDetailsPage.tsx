@@ -24,11 +24,7 @@ const ProjectDetailsPage = () => {
 	   TIME TRACKING STATE
 	========================= */
 
-	const [timeForm, setTimeForm] = useState<TimeForm>({
-		date: new Date().toISOString().split("T")[0],
-		hours: 0,
-		minutes: 0,
-	});
+	const [taskForms, setTaskForms] = useState<Record<string, TimeForm>>({});
 
 	const [editingRecord, setEditingRecord] = useState<{
 		taskId: string;
@@ -36,24 +32,26 @@ const ProjectDetailsPage = () => {
 		form: TimeForm;
 	} | null>(null);
 
-	useEffect(() => {
-		const load = async () => {
-			try {
-				const res = await fetch(
-					`http://localhost:3000/projects/${id}`,
-					{ credentials: "include" },
-				);
+	const loadProject = async () => {
+		try {
+			const res = await fetch(`http://localhost:3000/projects/${id}`, {
+				credentials: "include",
+			});
 
-				const data = await res.json();
-				setProject(data);
-			} catch (err) {
-				console.error(err);
-			} finally {
-				setLoading(false);
-			}
+			const data = await res.json();
+			setProject(data);
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
+	useEffect(() => {
+		const init = async () => {
+			await loadProject();
+			setLoading(false);
 		};
 
-		load();
+		init();
 	}, [id]);
 
 	/* =========================
@@ -80,27 +78,47 @@ const ProjectDetailsPage = () => {
 	   TIME TRACKING FUNCTIONS
 	========================= */
 
-	const resetForm = () => {
+	/*const resetForm = () => {
 		setTimeForm({
 			date: new Date().toISOString().split("T")[0],
 			hours: 0,
 			minutes: 0,
 		});
+	};*/
+
+	const getTaskForm = (taskId: string): TimeForm => {
+		return (
+			taskForms[taskId] || {
+				date: new Date().toISOString().split("T")[0],
+				hours: 0,
+				minutes: 0,
+			}
+		);
 	};
 
 	const addTimeRecord = async (taskId: string) => {
+		const form = getTaskForm(taskId);
+
 		await fetch(
 			`http://localhost:3000/projects/${project._id}/tasks/${taskId}/time`,
 			{
 				method: "POST",
 				credentials: "include",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(timeForm),
+				body: JSON.stringify(form),
 			},
 		);
 
-		resetForm();
-		window.location.reload();
+		setTaskForms((prev) => ({
+			...prev,
+			[taskId]: {
+				date: new Date().toISOString().split("T")[0],
+				hours: 0,
+				minutes: 0,
+			},
+		}));
+
+		await loadProject();
 	};
 
 	const updateTimeRecord = async () => {
@@ -117,7 +135,7 @@ const ProjectDetailsPage = () => {
 		);
 
 		setEditingRecord(null);
-		window.location.reload();
+		await loadProject();
 	};
 
 	const deleteTimeRecord = async (taskId: string, recordId: string) => {
@@ -129,7 +147,19 @@ const ProjectDetailsPage = () => {
 			},
 		);
 
-		window.location.reload();
+		await loadProject();
+	};
+
+	const canTrackTime = (task: any) => {
+		if (user?.role === "admin") return true;
+
+		if (!task.taskMember) return false;
+
+		if (typeof task.taskMember === "string") {
+			return task.taskMember === user?._id;
+		}
+
+		return task.taskMember._id === user?._id;
 	};
 
 	/* =========================
@@ -211,52 +241,63 @@ const ProjectDetailsPage = () => {
 						   ADD TIME RECORD
 						========================= */}
 
-						<div className="flex gap-2 mt-3">
-							<input
-								type="date"
-								className="border p-1"
-								value={timeForm.date}
-								onChange={(e) =>
-									setTimeForm((p) => ({
-										...p,
-										date: e.target.value,
-									}))
-								}
-							/>
+						{canTrackTime(task) && (
+							<div className="flex gap-2 mt-3">
+								<input
+									type="date"
+									className="border p-1"
+									value={getTaskForm(task._id!).date}
+									onChange={(e) =>
+										setTaskForms((prev) => ({
+											...prev,
+											[task._id!]: {
+												...getTaskForm(task._id!),
+												date: e.target.value,
+											},
+										}))
+									}
+								/>
 
-							<input
-								type="number"
-								placeholder="Hours"
-								className="border p-1 w-20"
-								value={timeForm.hours}
-								onChange={(e) =>
-									setTimeForm((p) => ({
-										...p,
-										hours: Number(e.target.value),
-									}))
-								}
-							/>
+								<input
+									type="number"
+									placeholder="Hours"
+									className="border p-1 w-20"
+									value={getTaskForm(task._id!).hours}
+									onChange={(e) =>
+										setTaskForms((prev) => ({
+											...prev,
+											[task._id!]: {
+												...getTaskForm(task._id!),
+												hours: Number(e.target.value),
+											},
+										}))
+									}
+								/>
 
-							<input
-								type="number"
-								placeholder="Minutes"
-								className="border p-1 w-20"
-								value={timeForm.minutes}
-								onChange={(e) =>
-									setTimeForm((p) => ({
-										...p,
-										minutes: Number(e.target.value),
-									}))
-								}
-							/>
+								<input
+									type="number"
+									placeholder="Minutes"
+									className="border p-1 w-20"
+									value={getTaskForm(task._id!).minutes}
+									onChange={(e) =>
+										setTaskForms((prev) => ({
+											...prev,
+											[task._id!]: {
+												...getTaskForm(task._id!),
+												minutes: Number(e.target.value),
+											},
+										}))
+									}
+								/>
 
-							<button
-								className="bg-blue-500 text-white px-3"
-								onClick={() => addTimeRecord(task._id!)}
-							>
-								Add
-							</button>
-						</div>
+								<button
+									className="bg-blue-500 text-white px-3"
+									onClick={() => addTimeRecord(task._id!)}
+								>
+									Add
+								</button>
+							</div>
+						)}
 
 						{/* =========================
 						   TIME RECORDS
@@ -279,38 +320,41 @@ const ProjectDetailsPage = () => {
 										</p>
 									</div>
 
-									<div className="flex gap-2">
-										<button
-											className="text-blue-600"
-											onClick={() =>
-												setEditingRecord({
-													taskId: task._id!,
-													recordId: r._id!,
-													form: {
-														date: r.date
-															.toString()
-															.split("T")[0],
-														hours: r.hours,
-														minutes: r.minutes,
-													},
-												})
-											}
-										>
-											Edit
-										</button>
+									{(user?.role === "admin" ||
+										user?._id === r.user) && (
+										<div className="flex gap-2">
+											<button
+												className="text-blue-600"
+												onClick={() =>
+													setEditingRecord({
+														taskId: task._id!,
+														recordId: r._id!,
+														form: {
+															date: r.date
+																.toString()
+																.split("T")[0],
+															hours: r.hours,
+															minutes: r.minutes,
+														},
+													})
+												}
+											>
+												Edit
+											</button>
 
-										<button
-											className="text-red-600"
-											onClick={() =>
-												deleteTimeRecord(
-													task._id!,
-													r._id!,
-												)
-											}
-										>
-											Delete
-										</button>
-									</div>
+											<button
+												className="text-red-600"
+												onClick={() =>
+													deleteTimeRecord(
+														task._id!,
+														r._id!,
+													)
+												}
+											>
+												Delete
+											</button>
+										</div>
+									)}
 								</div>
 							))}
 						</div>
