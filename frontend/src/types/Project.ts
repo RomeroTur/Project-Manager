@@ -5,10 +5,13 @@ export type ProjectStatus =
 	| "completed";
 
 export type TimeSpentRecord = {
-	user: string;
+	_id: string;
 	date: string;
 	hours: number;
 	minutes: number;
+	user: string;
+	firstname: string;
+	lastname: string;
 };
 
 export type UserShort = {

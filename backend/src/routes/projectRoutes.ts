@@ -1,5 +1,7 @@
 import express from "express";
 import { Router } from "express";
+import { authMiddleware } from "#middleware";
+
 import {
 	getAllProjects,
 	getMyProjects,
@@ -7,22 +9,28 @@ import {
 	deleteProject,
 	createProject,
 	updateProject,
+	addTimeRecord,
+	updateTimeRecord,
+	deleteTimeRecord,
+	addComment,
+	updateComment,
+	deleteComment,
 } from "#controllers";
-import { authMiddleware } from "#middleware";
 
 const projectRouter = Router();
 
 projectRouter.use(express.json());
 
+/* PROJECTS */
 projectRouter.get("/", getAllProjects);
 projectRouter.get("/my-projects", authMiddleware, getMyProjects);
 projectRouter.get("/:id", getProjectById);
+
 projectRouter.post("/create", authMiddleware, createProject);
-projectRouter.delete("/:id", deleteProject);
-projectRouter.patch("/:id", updateProject);
+projectRouter.patch("/:id", authMiddleware, updateProject);
+projectRouter.delete("/:id", authMiddleware, deleteProject);
 
-/* new routes for comments and time tracking */
-
+/* TIME */
 projectRouter.post(
 	"/:projectId/tasks/:taskId/time",
 	authMiddleware,
@@ -41,6 +49,7 @@ projectRouter.delete(
 	deleteTimeRecord,
 );
 
+/* COMMENTS */
 projectRouter.post("/:projectId/comments", authMiddleware, addComment);
 
 projectRouter.patch(

@@ -1,5 +1,5 @@
 import { RequestHandler } from "express";
-import { Project, ProjectCreateCheckSchema } from "#models";
+import { Project, User, ProjectCreateCheckSchema } from "#models";
 import { AppError } from "#utils";
 
 /* =========================
@@ -10,7 +10,6 @@ const safeDate = (value: any): Date | undefined => {
 	if (!value) return undefined;
 
 	const date = new Date(value);
-
 	if (isNaN(date.getTime())) return undefined;
 
 	return date;
@@ -43,11 +42,9 @@ const calculateUserAvailability = (projects: any[]) => {
 
 			const isInProcess = task.taskStatus === "in process";
 
-			// IMPORTANT: once busy → always busy
 			if (isInProcess) {
-				userBusyMap.set(userId, false); // NOT available
+				userBusyMap.set(userId, false);
 			} else {
-				// only set available if not already marked busy
 				if (!userBusyMap.has(userId)) {
 					userBusyMap.set(userId, true);
 				}
@@ -57,6 +54,8 @@ const calculateUserAvailability = (projects: any[]) => {
 
 	return userBusyMap;
 };
+
+const isAdmin = (req: any) => req.user?.role === "admin";
 
 /* =========================
    GET ALL PROJECTS
@@ -136,11 +135,9 @@ const createProject: RequestHandler = async (req, res, next) => {
 
 		const data = validation.data;
 
-		// normalize dates (IMPORTANT FIX)
 		const startDate = safeDate(data.startDate);
 		const endDate = safeDate(data.endDate);
 
-		// derive members ONLY from tasks
 		const projectMembers = extractMembersFromTasks(data.tasks);
 
 		const project = await Project.create({
@@ -151,17 +148,11 @@ const createProject: RequestHandler = async (req, res, next) => {
 			createdBy: (req as any).user.userId,
 		});
 
-		// recompute availability for all affected users
 		const allProjects = await Project.find();
-
 		const availabilityMap = calculateUserAvailability(allProjects);
 
-		const User = (await import("#models")).User;
-
 		for (const [userId, available] of availabilityMap.entries()) {
-			await User.findByIdAndUpdate(userId, {
-				available,
-			});
+			await User.findByIdAndUpdate(userId, { available });
 		}
 
 		res.status(201).json(project);
@@ -177,10 +168,8 @@ const createProject: RequestHandler = async (req, res, next) => {
 const updateProject: RequestHandler = async (req, res, next) => {
 	try {
 		const { id } = req.params;
-
 		const updates = req.body;
 
-		// normalize dates if provided
 		if ("startDate" in updates) {
 			updates.startDate = safeDate(updates.startDate);
 		}
@@ -189,7 +178,6 @@ const updateProject: RequestHandler = async (req, res, next) => {
 			updates.endDate = safeDate(updates.endDate);
 		}
 
-		// if tasks updated → recalc members
 		if (updates.tasks) {
 			updates.projectMembers = extractMembersFromTasks(updates.tasks);
 		}
@@ -197,10 +185,7 @@ const updateProject: RequestHandler = async (req, res, next) => {
 		const updated = await Project.findByIdAndUpdate(
 			id,
 			{ $set: updates },
-			{
-				new: true,
-				runValidators: true,
-			},
+			{ new: true, runValidators: true },
 		);
 
 		if (!updated) {
@@ -210,12 +195,8 @@ const updateProject: RequestHandler = async (req, res, next) => {
 		const allProjects = await Project.find();
 		const availabilityMap = calculateUserAvailability(allProjects);
 
-		const User = (await import("#models")).User;
-
 		for (const [userId, available] of availabilityMap.entries()) {
-			await User.findByIdAndUpdate(userId, {
-				available,
-			});
+			await User.findByIdAndUpdate(userId, { available });
 		}
 
 		res.status(200).json(updated);
@@ -238,11 +219,179 @@ const deleteProject: RequestHandler = async (req, res, next) => {
 			return next(new AppError("Project not found", 404));
 		}
 
-		res.status(200).json({
-			message: "Project deleted",
-		});
+		res.status(200).json({ message: "Project deleted" });
 	} catch (error) {
 		next(error);
+	}
+};
+
+/* =========================================================
+   TIME TRACKING
+========================================================= */
+
+const addTimeRecord: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId, taskId } = req.params;
+		const { date, hours, minutes } = req.body;
+
+		const project = await Project.findById(projectId);
+		if (!project) return next(new AppError("Project not found", 404));
+
+		const task = project.tasks.id(taskId);
+		if (!task) return next(new AppError("Task not found", 404));
+
+		if (!isAdmin(req) && task.taskMember?.toString() !== req.user.userId) {
+			return next(new AppError("Not allowed", 403));
+		}
+
+		task.timeSpentRecords.push({
+			user: req.user.userId,
+			firstname: req.user.firstname,
+			lastname: req.user.lastname,
+			date,
+			hours,
+			minutes,
+		});
+
+		await project.save();
+
+		res.json(project);
+	} catch (err) {
+		next(err);
+	}
+};
+
+const updateTimeRecord: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId, taskId, recordId } = req.params;
+		const { date, hours, minutes } = req.body;
+
+		const project = await Project.findById(projectId);
+		if (!project) return next(new AppError("Project not found", 404));
+
+		const task = project.tasks.id(taskId);
+		if (!task) return next(new AppError("Task not found", 404));
+		const record = task?.timeSpentRecords.id(recordId);
+
+		if (!record) return next(new AppError("Record not found", 404));
+
+		if (!isAdmin(req) && record.user.toString() !== req.user.userId) {
+			return next(new AppError("Not allowed", 403));
+		}
+
+		if (date) record.date = date;
+		if (hours !== undefined) record.hours = hours;
+		if (minutes !== undefined) record.minutes = minutes;
+
+		await project.save();
+
+		res.json(project);
+	} catch (err) {
+		next(err);
+	}
+};
+
+const deleteTimeRecord: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId, taskId, recordId } = req.params;
+
+		const project = await Project.findById(projectId);
+		if (!project) return next(new AppError("Project not found", 404));
+
+		const task = project.tasks.id(taskId);
+		if (!task) return next(new AppError("Task not found", 404));
+		const record = task?.timeSpentRecords.id(recordId);
+
+		if (!record) return next(new AppError("Record not found", 404));
+
+		if (!isAdmin(req) && record.user.toString() !== req.user.userId) {
+			return next(new AppError("Not allowed", 403));
+		}
+
+		record.deleteOne();
+		await project.save();
+
+		res.json(project);
+	} catch (err) {
+		next(err);
+	}
+};
+
+/* =========================================================
+   COMMENTS
+========================================================= */
+
+const addComment: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId } = req.params;
+		const { title, comment } = req.body;
+
+		const project = await Project.findById(projectId);
+		if (!project) return next(new AppError("Project not found", 404));
+
+		project.comments.push({
+			title,
+			comment,
+			author: req.user.userId,
+			firstname: req.user.firstname,
+			lastname: req.user.lastname,
+			timestamp: new Date(),
+		});
+
+		await project.save();
+
+		res.json(project);
+	} catch (err) {
+		next(err);
+	}
+};
+
+const updateComment: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId, commentId } = req.params;
+		const { title, comment } = req.body;
+
+		const project = await Project.findById(projectId);
+		if (!project) return next(new AppError("Project not found", 404));
+
+		const c = project.comments.id(commentId);
+		if (!c) return next(new AppError("Comment not found", 404));
+
+		if (!isAdmin(req) && c.author.toString() !== req.user.userId) {
+			return next(new AppError("Not allowed", 403));
+		}
+
+		if (title) c.title = title;
+		if (comment) c.comment = comment;
+
+		await project.save();
+
+		res.json(project);
+	} catch (err) {
+		next(err);
+	}
+};
+
+const deleteComment: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId, commentId } = req.params;
+
+		const project = await Project.findById(projectId);
+		if (!project) return next(new AppError("Project not found", 404));
+
+		const c = project.comments.id(commentId);
+		if (!c) return next(new AppError("Comment not found", 404));
+
+		if (!isAdmin(req) && c.author.toString() !== req.user.userId) {
+			return next(new AppError("Not allowed", 403));
+		}
+
+		c.deleteOne();
+		await project.save();
+
+		res.json(project);
+	} catch (err) {
+		next(err);
 	}
 };
 
@@ -253,4 +402,10 @@ export {
 	createProject,
 	updateProject,
 	deleteProject,
+	addTimeRecord,
+	updateTimeRecord,
+	deleteTimeRecord,
+	addComment,
+	updateComment,
+	deleteComment,
 };
