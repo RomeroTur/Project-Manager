@@ -11,6 +11,7 @@ import CreateProjectPage from "./pages/CreateProjectPage";
 import EditProjectPage from "./pages/EditProjectPage";
 
 import UsersPage from "./pages/UsersPage";
+import UserListPage from "./pages/UserListPage";
 import UserDetailsPage from "./pages/UserDetailsPage";
 import UserEditPage from "./pages/UserEditPage";
 import CreateUserPage from "./pages/CreateUserPage";
@@ -18,7 +19,6 @@ import CreateUserPage from "./pages/CreateUserPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
-//import AdminLayout from "./layouts/AdminLayout";
 import AppLayout from "./layouts/AppLayout";
 
 import "./index.css";
@@ -27,64 +27,97 @@ function App() {
 	return (
 		<BrowserRouter>
 			<Routes>
+				{/* =========================
+				    PUBLIC ROUTES
+				========================= */}
 				<Route path="/" element={<Navigate to="/login" replace />} />
+
 				<Route path="/login" element={<LoginPage />} />
 
+				{/* =========================
+				    PROTECTED AREA (ALL LOGGED USERS)
+				========================= */}
 				<Route element={<ProtectedRoute />}>
 					<Route element={<AppLayout />}>
-						{/* USER ROUTES */}
+						{/* DASHBOARD */}
 						<Route path="/dashboard" element={<UserDashboard />} />
 
+						{/* PROJECTS (USER + ADMIN) */}
 						<Route path="/projects" element={<ProjectsPage />} />
+
 						<Route
 							path="/projects/:id"
 							element={<ProjectDetailsPage />}
 						/>
 
+						{/* USERS (ALL USERS CAN VIEW LIST) */}
+						<Route path="/users" element={<UserListPage />} />
+
 						<Route
 							path="/users/:id"
 							element={<UserDetailsPage />}
 						/>
+					</Route>
+				</Route>
 
-						{/* ADMIN ROUTES */}
-						<Route element={<AdminRoute />}>
-							<Route path="/admin">
-								<Route index element={<AdminDashboard />} />
+				{/* =========================
+				    ADMIN AREA
+				========================= */}
+				<Route element={<ProtectedRoute />}>
+					<Route element={<AdminRoute />}>
+						<Route element={<AppLayout />}>
+							<Route path="/admin" element={<AdminDashboard />} />
 
-								<Route
-									path="projects"
-									element={<ProjectsPage />}
-								/>
-								<Route
-									path="projects/create"
-									element={<CreateProjectPage />}
-								/>
-								<Route
-									path="projects/:id/edit"
-									element={<EditProjectPage />}
-								/>
-								<Route
-									path="projects/:id"
-									element={<ProjectDetailsPage />}
-								/>
+							{/* ADMIN PROJECTS */}
+							<Route
+								path="/admin/projects"
+								element={<ProjectsPage />}
+							/>
 
-								<Route path="users" element={<UsersPage />} />
-								<Route
-									path="users/register"
-									element={<CreateUserPage />}
-								/>
-								<Route
-									path="users/:id"
-									element={<UserDetailsPage />}
-								/>
-								<Route
-									path="users/:id/edit"
-									element={<UserEditPage />}
-								/>
-							</Route>
+							<Route
+								path="/admin/projects/create"
+								element={<CreateProjectPage />}
+							/>
+
+							<Route
+								path="/admin/projects/:id/edit"
+								element={<EditProjectPage />}
+							/>
+
+							<Route
+								path="/admin/projects/:id"
+								element={<ProjectDetailsPage />}
+							/>
+
+							{/* ADMIN USERS */}
+							<Route
+								path="/admin/users"
+								element={<UsersPage />}
+							/>
+
+							<Route
+								path="/admin/users/register"
+								element={<CreateUserPage />}
+							/>
+
+							<Route
+								path="/admin/users/:id"
+								element={<UserDetailsPage />}
+							/>
+
+							<Route
+								path="/admin/users/:id/edit"
+								element={<UserEditPage />}
+							/>
 						</Route>
 					</Route>
 				</Route>
+
+				{/* fallback */}
+				<Route
+					path="*"
+					element={<Navigate to="/dashboard" replace />}
+				/>
 			</Routes>
 		</BrowserRouter>
 	);
