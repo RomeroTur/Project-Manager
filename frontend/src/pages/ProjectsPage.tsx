@@ -34,6 +34,11 @@ const ProjectsPage = () => {
 		return Math.ceil((e - s) / (1000 * 60 * 60 * 24));
 	};
 
+	const formatDate = (date?: string) => {
+		if (!date) return "Not set";
+		return new Date(date).toLocaleDateString();
+	};
+
 	return (
 		<div>
 			<h1 className="text-2xl font-bold mb-4">Projects</h1>
@@ -57,21 +62,9 @@ const ProjectsPage = () => {
 						</p>
 
 						{/* DATES */}
-						<p>
-							Start:{" "}
-							{project.startDate
-								? new Date(
-										project.startDate,
-									).toLocaleDateString()
-								: "-"}
-						</p>
+						<p>Start: {formatDate(project.startDate)}</p>
 
-						<p>
-							End:{" "}
-							{project.endDate
-								? new Date(project.endDate).toLocaleDateString()
-								: "-"}
-						</p>
+						<p>End: {formatDate(project.endDate)}</p>
 
 						{/* DEADLINE */}
 						{deadline !== null && (
@@ -85,17 +78,32 @@ const ProjectsPage = () => {
 							<h3 className="font-semibold">Tasks</h3>
 
 							{project.tasks?.length ? (
-								project.tasks.map((task) => (
-									<div
-										key={task._id}
-										className="border p-2 mt-2"
-									>
-										<p>
-											<strong>{task.taskTitle}</strong>
-										</p>
-										<p>Status: {task.taskStatus}</p>
-									</div>
-								))
+								project.tasks.map((task) => {
+									const member = task.taskMember;
+
+									const memberName = !member
+										? "Unassigned"
+										: typeof member === "string"
+											? member
+											: `${member.firstname} ${member.lastname}`;
+
+									return (
+										<div
+											key={task._id}
+											className="border p-2 mt-2"
+										>
+											<p>
+												<strong>
+													{task.taskTitle}
+												</strong>
+											</p>
+
+											<p>Status: {task.taskStatus}</p>
+
+											<p>Member: {memberName}</p>
+										</div>
+									);
+								})
 							) : (
 								<p>No tasks</p>
 							)}

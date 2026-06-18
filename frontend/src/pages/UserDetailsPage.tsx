@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-
+import { useAuth } from "../hooks/useAuth";
 import type { User } from "../types/User";
 
 const UserDetailsPage = () => {
 	const { id } = useParams();
-
+	const { user: authUser } = useAuth();
 	const [user, setUser] = useState<User | null>(null);
 
 	useEffect(() => {
@@ -108,14 +108,16 @@ const UserDetailsPage = () => {
 				))}
 			</div>
 
-			<div>
-				<Link
-					to={`/admin/users/${user._id}/edit`}
-					className="border px-3 py-1"
-				>
-					Edit User
-				</Link>
-			</div>
+			{authUser?.role === "admin" && (
+				<div>
+					<Link
+						to={`/admin/users/${user._id}/edit`}
+						className="border px-3 py-1"
+					>
+						Edit User
+					</Link>
+				</div>
+			)}
 		</div>
 	);
 };
