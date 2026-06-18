@@ -131,13 +131,13 @@ export const loginUser: RequestHandler = async (req, res, next) => {
 		const user = await User.findOne({ email });
 
 		if (!user) {
-			return next(new AppError("Invalid credentials", 400));
+			return next(new AppError("No such user", 400));
 		}
 
 		const match = await bcrypt.compare(password, user.password);
 
 		if (!match) {
-			return next(new AppError("Invalid credentials", 400));
+			return next(new AppError("Invalid password", 400));
 		}
 
 		const token = jwt.sign(

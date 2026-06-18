@@ -196,8 +196,6 @@ const ProjectCreateCheckSchema = z.object({
 			z.object({
 				taskTitle: z.string().min(1),
 
-				// IMPORTANT FIX:
-				// only real strings allowed, no null, no ""
 				taskMember: z
 					.string()
 					.trim()

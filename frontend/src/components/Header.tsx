@@ -7,18 +7,18 @@ const Header = () => {
 
 	if (loading || !user) return null;
 
-	const handleLogout = async () => {
-		await logout();
-		navigate("/login");
-	};
-
 	return (
-		<header className="w-full flex justify-between items-center px-6 py-3 bg-white border-b">
-			<h1 className="text-lg font-semibold">Welcome {user.firstname}</h1>
+		<header className="bg-white border-b px-6 py-3 flex justify-between items-center">
+			<h1 className="text-gray-700 font-medium">
+				Welcome, <span className="font-semibold">{user.firstname}</span>
+			</h1>
 
 			<button
-				onClick={handleLogout}
-				className="px-3 py-1 border rounded hover:bg-gray-100"
+				onClick={async () => {
+					await logout();
+					navigate("/login");
+				}}
+				className="bg-gray-100 hover:bg-gray-200 px-4 py-1 rounded text-sm"
 			>
 				Logout
 			</button>

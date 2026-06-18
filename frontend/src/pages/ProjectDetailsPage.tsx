@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-
 import type { Project } from "../types/Project";
 
 /* =========================
-   TIME TRACKING TYPES
+   TYPES
 ========================= */
 
 type TimeForm = {
@@ -14,23 +13,30 @@ type TimeForm = {
 	minutes: number;
 };
 
+/* =========================
+   COMPONENT
+========================= */
+
 const ProjectDetailsPage = () => {
+	const DEADLINE_WARNING_DAYS = 14;
+	const DEADLINE_CRITICAL_DAYS = 7;
+
 	const { id } = useParams();
 	const { user } = useAuth();
+
 	const [project, setProject] = useState<Project | null>(null);
 	const [loading, setLoading] = useState(true);
 
-	/* =========================
-	   TIME TRACKING STATE
-	========================= */
-
 	const [taskForms, setTaskForms] = useState<Record<string, TimeForm>>({});
-
 	const [editingRecord, setEditingRecord] = useState<{
 		taskId: string;
 		recordId: string;
 		form: TimeForm;
 	} | null>(null);
+
+	/* =========================
+	   LOAD PROJECT
+	========================= */
 
 	const loadProject = async () => {
 		try {
@@ -55,36 +61,21 @@ const ProjectDetailsPage = () => {
 	}, [id]);
 
 	/* =========================
-	   LOADING STATE
-	========================= */
-
-	if (loading) return <p>Loading...</p>;
-	if (!project) return <p>Project not found</p>;
-
-	/* =========================
-	   DEADLINE CALC
+	   DEADLINE
 	========================= */
 
 	let deadlineDays: number | null = null;
 
-	if (project.startDate && project.endDate) {
-		const startTime = new Date(project.startDate).getTime();
-		const endTime = new Date(project.endDate).getTime();
+	if (project?.startDate && project?.endDate) {
+		const s = new Date(project.startDate).getTime();
+		const e = new Date(project.endDate).getTime();
 
-		deadlineDays = Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
+		deadlineDays = Math.ceil((e - s) / (1000 * 60 * 60 * 24));
 	}
 
 	/* =========================
-	   TIME TRACKING FUNCTIONS
+	   HELPERS
 	========================= */
-
-	/*const resetForm = () => {
-		setTimeForm({
-			date: new Date().toISOString().split("T")[0],
-			hours: 0,
-			minutes: 0,
-		});
-	};*/
 
 	const getTaskForm = (taskId: string): TimeForm => {
 		return (
@@ -95,6 +86,22 @@ const ProjectDetailsPage = () => {
 			}
 		);
 	};
+
+	const canTrackTime = (task: any) => {
+		if (user?.role === "admin") return true;
+
+		if (!task.taskMember) return false;
+
+		if (typeof task.taskMember === "string") {
+			return task.taskMember === user?._id;
+		}
+
+		return task.taskMember._id === user?._id;
+	};
+
+	/* =========================
+	   TIME ACTIONS
+	========================= */
 
 	const addTimeRecord = async (taskId: string) => {
 		const form = getTaskForm(taskId);
@@ -109,6 +116,7 @@ const ProjectDetailsPage = () => {
 			},
 		);
 
+		// ✅ FORCE RESET (clean UX)
 		setTaskForms((prev) => ({
 			...prev,
 			[taskId]: {
@@ -125,7 +133,7 @@ const ProjectDetailsPage = () => {
 		if (!editingRecord) return;
 
 		await fetch(
-			`http://localhost:3000/projects/${project._id}/tasks/${editingRecord.taskId}/time/${editingRecord.recordId}`,
+			`http://localhost:3000/projects/${project!._id}/tasks/${editingRecord.taskId}/time/${editingRecord.recordId}`,
 			{
 				method: "PATCH",
 				credentials: "include",
@@ -140,7 +148,7 @@ const ProjectDetailsPage = () => {
 
 	const deleteTimeRecord = async (taskId: string, recordId: string) => {
 		await fetch(
-			`http://localhost:3000/projects/${project._id}/tasks/${taskId}/time/${recordId}`,
+			`http://localhost:3000/projects/${project!._id}/tasks/${taskId}/time/${recordId}`,
 			{
 				method: "DELETE",
 				credentials: "include",
@@ -150,315 +158,404 @@ const ProjectDetailsPage = () => {
 		await loadProject();
 	};
 
-	const canTrackTime = (task: any) => {
-		if (user?.role === "admin") return true;
+	/* =========================
+	   LOADING
+	========================= */
 
-		if (!task.taskMember) return false;
-
-		if (typeof task.taskMember === "string") {
-			return task.taskMember === user?._id;
-		}
-
-		return task.taskMember._id === user?._id;
-	};
+	if (loading) return <p className="p-6">Loading...</p>;
+	if (!project) return <p className="p-6">Project not found</p>;
 
 	/* =========================
 	   RENDER
 	========================= */
 
 	return (
-		<div className="space-y-6">
-			{/* PROJECT HEADER */}
-			<div>
-				<h1 className="text-2xl font-bold">{project.projectTitle}</h1>
-				<p>{project.projectDescription}</p>
+		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			{/* ================= LEFT SIDE ================= */}
+			<div className="space-y-6">
+				{/* PROJECT CARD */}
+				<div className="bg-white border rounded-lg p-5 shadow-sm">
+					<h1 className="text-2xl font-bold">
+						{project.projectTitle}
+					</h1>
+
+					<p className="text-gray-600 mt-1">
+						{project.projectDescription}
+					</p>
+
+					<div className="mt-4 text-sm text-gray-600 space-y-1">
+						<p>Status: {project.projectStatus}</p>
+
+						<p>
+							Start:{" "}
+							{project.startDate
+								? new Date(
+										project.startDate,
+									).toLocaleDateString()
+								: "-"}
+						</p>
+
+						<p>
+							End:{" "}
+							{project.endDate
+								? new Date(project.endDate).toLocaleDateString()
+								: "-"}
+						</p>
+
+						{deadlineDays !== null &&
+							(() => {
+								const style =
+									deadlineDays <= DEADLINE_CRITICAL_DAYS
+										? "text-red-600"
+										: deadlineDays <= DEADLINE_WARNING_DAYS
+											? "text-orange-500"
+											: "text-gray-700";
+
+								return (
+									<p className={`font-semibold ${style}`}>
+										<strong>Deadline:</strong> in{" "}
+										{deadlineDays} days
+									</p>
+								);
+							})()}
+					</div>
+
+					<p className="mt-4 text-sm text-gray-600">
+						<span className="font-medium">Members:</span>{" "}
+						{project.projectMembers?.length
+							? project.projectMembers
+									.map((m) =>
+										typeof m === "string"
+											? m
+											: `${m.firstname} ${m.lastname}`,
+									)
+									.join(", ")
+							: "Not assigned"}
+					</p>
+				</div>
 			</div>
 
-			{/* PROJECT INFO */}
-			<div className="border p-4">
-				<p>
-					<strong>Status:</strong> {project.projectStatus}
-				</p>
+			{/* ================= RIGHT SIDE ================= */}
+			<div className="bg-white border rounded-lg p-5 shadow-sm">
+				<h2 className="text-lg font-semibold mb-4">Tasks</h2>
 
-				<p>
-					<strong>Start:</strong>{" "}
-					{project.startDate
-						? new Date(project.startDate).toLocaleDateString()
-						: "Not set"}
-				</p>
-
-				<p>
-					<strong>End:</strong>{" "}
-					{project.endDate
-						? new Date(project.endDate).toLocaleDateString()
-						: "Not set"}
-				</p>
-
-				{deadlineDays !== null && (
-					<p>
-						<strong>Deadline:</strong> {deadlineDays} days
-					</p>
+				{project.tasks.length === 0 && (
+					<p className="text-gray-500">No tasks</p>
 				)}
 
-				<p>
-					<strong>Members:</strong>{" "}
-					{project.projectMembers?.length
-						? project.projectMembers
-								.map((m) =>
-									typeof m === "string"
-										? m
-										: `${m.firstname} ${m.lastname}`,
-								)
-								.join(", ")
-						: "Not assigned yet"}
-				</p>
-			</div>
+				<div className="space-y-3">
+					{project.tasks.map((task) => {
+						const isEditingThisTask =
+							editingRecord?.taskId === task._id;
 
-			{/* TASKS */}
-			<div>
-				<h2 className="font-semibold">Tasks</h2>
-
-				{project.tasks.length === 0 && <p>No tasks</p>}
-
-				{project.tasks.map((task) => (
-					<div key={task._id} className="border p-4 mt-2">
-						<p>
-							<strong>{task.taskTitle}</strong>
-						</p>
-
-						<p>Status: {task.taskStatus}</p>
-
-						<p>
-							Member:{" "}
-							{!task.taskMember
-								? "Unassigned"
-								: typeof task.taskMember === "string"
-									? task.taskMember
-									: `${task.taskMember.firstname} ${task.taskMember.lastname}`}
-						</p>
-
-						{/* =========================
-						   ADD TIME RECORD
-						========================= */}
-
-						{canTrackTime(task) && (
-							<div className="flex gap-2 mt-3">
-								<input
-									type="date"
-									className="border p-1"
-									value={getTaskForm(task._id!).date}
-									onChange={(e) =>
-										setTaskForms((prev) => ({
-											...prev,
-											[task._id!]: {
-												...getTaskForm(task._id!),
-												date: e.target.value,
-											},
-										}))
-									}
-								/>
-
-								<input
-									type="number"
-									placeholder="Hours"
-									className="border p-1 w-20"
-									value={getTaskForm(task._id!).hours}
-									onChange={(e) =>
-										setTaskForms((prev) => ({
-											...prev,
-											[task._id!]: {
-												...getTaskForm(task._id!),
-												hours: Number(e.target.value),
-											},
-										}))
-									}
-								/>
-
-								<input
-									type="number"
-									placeholder="Minutes"
-									className="border p-1 w-20"
-									value={getTaskForm(task._id!).minutes}
-									onChange={(e) =>
-										setTaskForms((prev) => ({
-											...prev,
-											[task._id!]: {
-												...getTaskForm(task._id!),
-												minutes: Number(e.target.value),
-											},
-										}))
-									}
-								/>
-
-								<button
-									className="bg-blue-500 text-white px-3"
-									onClick={() => addTimeRecord(task._id!)}
-								>
-									Add
-								</button>
-							</div>
-						)}
-
-						{/* =========================
-						   TIME RECORDS
-						========================= */}
-
-						<div className="mt-3 space-y-2">
-							{task.timeSpentRecords?.map((r) => (
-								<div
-									key={r._id}
-									className="border p-2 flex justify-between"
-								>
-									<div>
-										<p>
-											{new Date(
-												r.date,
-											).toLocaleDateString()}
-										</p>
-										<p>
-											{r.hours}h {r.minutes}m
-										</p>
-									</div>
-
-									{(user?.role === "admin" ||
-										user?._id === r.user) && (
-										<div className="flex gap-2">
-											<button
-												className="text-blue-600"
-												onClick={() =>
-													setEditingRecord({
-														taskId: task._id!,
-														recordId: r._id!,
-														form: {
-															date: r.date
-																.toString()
-																.split("T")[0],
-															hours: r.hours,
-															minutes: r.minutes,
-														},
-													})
-												}
-											>
-												Edit
-											</button>
-
-											<button
-												className="text-red-600"
-												onClick={() =>
-													deleteTimeRecord(
-														task._id!,
-														r._id!,
-													)
-												}
-											>
-												Delete
-											</button>
-										</div>
-									)}
+						return (
+							<div
+								key={task._id}
+								className="border rounded-lg p-4 bg-white shadow-sm"
+							>
+								{/* TASK HEADER */}
+								<div className="mb-3">
+									<p className="font-semibold">
+										{task.taskTitle}
+									</p>
+									<p className="text-sm text-gray-500">
+										Status: {task.taskStatus}
+									</p>
 								</div>
-							))}
-						</div>
-					</div>
-				))}
-			</div>
 
-			{/* =========================
-			   EDIT MODAL
+								{/* MEMBER */}
+								<p className="text-sm text-gray-600 mb-3">
+									Member:{" "}
+									{!task.taskMember
+										? "Unassigned"
+										: typeof task.taskMember === "string"
+											? task.taskMember
+											: `${task.taskMember.firstname} ${task.taskMember.lastname}`}
+								</p>
+
+								{/* =========================
+			   TIME RECORDS (TOP)
 			========================= */}
 
-			{editingRecord && (
-				<div className="border p-4 bg-gray-50">
-					<h3 className="font-semibold mb-2">Edit Time Record</h3>
+								<div className="mb-3">
+									<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+										Time records
+									</h4>
 
-					<div className="flex gap-2">
-						<input
-							type="date"
-							className="border p-1"
-							value={editingRecord.form.date}
-							onChange={(e) =>
-								setEditingRecord((p) =>
-									p
-										? {
-												...p,
-												form: {
-													...p.form,
-													date: e.target.value,
-												},
-											}
-										: null,
-								)
-							}
-						/>
+									<div className="space-y-1 text-sm">
+										{task.timeSpentRecords?.length ? (
+											task.timeSpentRecords.map((r) => (
+												<div
+													key={r._id}
+													className="flex justify-between items-center"
+												>
+													<span className="text-gray-700">
+														{new Date(
+															r.date,
+														).toLocaleDateString()}{" "}
+														| {r.hours}h {r.minutes}
+														m
+													</span>
 
-						<input
-							type="number"
-							className="border p-1 w-20"
-							value={editingRecord.form.hours}
-							onChange={(e) =>
-								setEditingRecord((p) =>
-									p
-										? {
-												...p,
-												form: {
-													...p.form,
-													hours: Number(
-														e.target.value,
-													),
-												},
-											}
-										: null,
-								)
-							}
-						/>
+													<div className="flex gap-2 text-xs">
+														<button
+															className="text-blue-600 hover:underline"
+															onClick={() =>
+																setEditingRecord(
+																	{
+																		taskId: task._id!,
+																		recordId:
+																			r._id!,
+																		form: {
+																			date: r.date
+																				.toString()
+																				.split(
+																					"T",
+																				)[0],
+																			hours: r.hours,
+																			minutes:
+																				r.minutes,
+																		},
+																	},
+																)
+															}
+														>
+															Edit
+														</button>
 
-						<input
-							type="number"
-							className="border p-1 w-20"
-							value={editingRecord.form.minutes}
-							onChange={(e) =>
-								setEditingRecord((p) =>
-									p
-										? {
-												...p,
-												form: {
-													...p.form,
-													minutes: Number(
-														e.target.value,
-													),
-												},
-											}
-										: null,
-								)
-							}
-						/>
+														<button
+															className="text-red-600 hover:underline"
+															onClick={() =>
+																deleteTimeRecord(
+																	task._id!,
+																	r._id!,
+																)
+															}
+														>
+															Delete
+														</button>
+													</div>
+												</div>
+											))
+										) : (
+											<p className="text-gray-400 text-sm">
+												No time records yet
+											</p>
+										)}
+									</div>
+								</div>
 
-						<button
-							className="bg-green-600 text-white px-3"
-							onClick={updateTimeRecord}
-						>
-							Save
-						</button>
+								{/* =========================
+			   EDIT FORM (DIRECTLY BELOW RECORD)
+			========================= */}
 
-						<button
-							className="bg-gray-400 text-white px-3"
-							onClick={() => setEditingRecord(null)}
-						>
-							Cancel
-						</button>
-					</div>
+								{isEditingThisTask && (
+									<div className="mb-3 border-t pt-3">
+										<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+											Edit time record
+										</h4>
+
+										<div className="flex gap-2">
+											<input
+												type="date"
+												className="border p-1 text-sm"
+												value={editingRecord!.form.date}
+												onChange={(e) =>
+													setEditingRecord((prev) =>
+														prev
+															? {
+																	...prev,
+																	form: {
+																		...prev.form,
+																		date: e
+																			.target
+																			.value,
+																	},
+																}
+															: null,
+													)
+												}
+											/>
+
+											<input
+												type="number"
+												className="border p-1 w-16 text-sm"
+												value={
+													editingRecord!.form.hours
+												}
+												onChange={(e) =>
+													setEditingRecord((prev) =>
+														prev
+															? {
+																	...prev,
+																	form: {
+																		...prev.form,
+																		hours: Number(
+																			e
+																				.target
+																				.value,
+																		),
+																	},
+																}
+															: null,
+													)
+												}
+											/>
+
+											<input
+												type="number"
+												className="border p-1 w-16 text-sm"
+												value={
+													editingRecord!.form.minutes
+												}
+												onChange={(e) =>
+													setEditingRecord((prev) =>
+														prev
+															? {
+																	...prev,
+																	form: {
+																		...prev.form,
+																		minutes:
+																			Number(
+																				e
+																					.target
+																					.value,
+																			),
+																	},
+																}
+															: null,
+													)
+												}
+											/>
+
+											<button
+												onClick={updateTimeRecord}
+												className="bg-green-600 text-white px-3 text-sm rounded"
+											>
+												Save
+											</button>
+
+											<button
+												onClick={() =>
+													setEditingRecord(null)
+												}
+												className="bg-gray-300 px-3 text-sm rounded"
+											>
+												Cancel
+											</button>
+										</div>
+									</div>
+								)}
+
+								{/* =========================
+			   ADD TIME FORM (BOTTOM)
+			========================= */}
+
+								{canTrackTime(task) && (
+									<div className="border-t pt-3 mt-3">
+										<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+											Add time record
+										</h4>
+
+										<div className="flex gap-2">
+											<input
+												type="date"
+												className="border p-1 text-sm"
+												value={
+													getTaskForm(task._id!).date
+												}
+												onChange={(e) =>
+													setTaskForms((prev) => ({
+														...prev,
+														[task._id!]: {
+															...getTaskForm(
+																task._id!,
+															),
+															date: e.target
+																.value,
+														},
+													}))
+												}
+											/>
+
+											<input
+												type="number"
+												placeholder="h"
+												className="border p-1 w-16 text-sm"
+												value={
+													getTaskForm(task._id!).hours
+												}
+												onChange={(e) =>
+													setTaskForms((prev) => ({
+														...prev,
+														[task._id!]: {
+															...getTaskForm(
+																task._id!,
+															),
+															hours: Number(
+																e.target.value,
+															),
+														},
+													}))
+												}
+											/>
+
+											<input
+												type="number"
+												placeholder="m"
+												className="border p-1 w-16 text-sm"
+												value={
+													getTaskForm(task._id!)
+														.minutes
+												}
+												onChange={(e) =>
+													setTaskForms((prev) => ({
+														...prev,
+														[task._id!]: {
+															...getTaskForm(
+																task._id!,
+															),
+															minutes: Number(
+																e.target.value,
+															),
+														},
+													}))
+												}
+											/>
+
+											<button
+												onClick={() =>
+													addTimeRecord(task._id!)
+												}
+												className="bg-blue-600 text-white px-3 text-sm rounded"
+											>
+												Add
+											</button>
+										</div>
+									</div>
+								)}
+							</div>
+						);
+					})}
 				</div>
-			)}
+			</div>
 
 			{/* NAV */}
-			<div className="flex gap-3">
+			<div className="flex gap-3 mt-6">
 				{user?.role === "admin" && (
-					<Link to={`/admin/projects/${project._id}/edit`}>Edit</Link>
+					<Link
+						to={`/admin/projects/${project._id}/edit`}
+						className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition"
+					>
+						Edit Project
+					</Link>
 				)}
 
 				<Link
 					to={
 						user?.role === "admin" ? "/admin/projects" : "/projects"
 					}
+					className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 transition"
 				>
 					Back
 				</Link>

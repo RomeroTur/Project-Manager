@@ -65,7 +65,6 @@ const User = model("User", UserSchema, "users");
 
 /* -----------------------------
    ZOD VALIDATION (REGISTER)
-   IMPORTANT: mirrors schema loosely
 ------------------------------*/
 const UserRegisterCheckSchema = z.object({
 	firstname: z.string().min(1, "First name is required"),
