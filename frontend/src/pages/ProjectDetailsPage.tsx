@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import type { Project } from "../types/Project";
+import type { Project, Task } from "../types/Project";
 
 /* =========================
    TYPES
@@ -87,7 +87,7 @@ const ProjectDetailsPage = () => {
 		);
 	};
 
-	const canTrackTime = (task: any) => {
+	const canTrackTime = (task: Task) => {
 		if (user?.role === "admin") return true;
 
 		if (!task.taskMember) return false;
@@ -107,7 +107,7 @@ const ProjectDetailsPage = () => {
 		const form = getTaskForm(taskId);
 
 		await fetch(
-			`http://localhost:3000/projects/${project._id}/tasks/${taskId}/time`,
+			`http://localhost:3000/projects/${project!._id}/tasks/${taskId}/time`,
 			{
 				method: "POST",
 				credentials: "include",
@@ -116,7 +116,6 @@ const ProjectDetailsPage = () => {
 			},
 		);
 
-		// ✅ FORCE RESET (clean UX)
 		setTaskForms((prev) => ({
 			...prev,
 			[taskId]: {
@@ -170,378 +169,9 @@ const ProjectDetailsPage = () => {
 	========================= */
 
 	return (
-		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-			{/* ================= LEFT SIDE ================= */}
-			<div className="space-y-6">
-				{/* PROJECT CARD */}
-				<div className="bg-white border rounded-lg p-5 shadow-sm">
-					<h1 className="text-2xl font-bold">
-						{project.projectTitle}
-					</h1>
-
-					<p className="text-gray-600 mt-1">
-						{project.projectDescription}
-					</p>
-
-					<div className="mt-4 text-sm text-gray-600 space-y-1">
-						<p>Status: {project.projectStatus}</p>
-
-						<p>
-							Start:{" "}
-							{project.startDate
-								? new Date(
-										project.startDate,
-									).toLocaleDateString()
-								: "-"}
-						</p>
-
-						<p>
-							End:{" "}
-							{project.endDate
-								? new Date(project.endDate).toLocaleDateString()
-								: "-"}
-						</p>
-
-						{deadlineDays !== null &&
-							(() => {
-								const style =
-									deadlineDays <= DEADLINE_CRITICAL_DAYS
-										? "text-red-600"
-										: deadlineDays <= DEADLINE_WARNING_DAYS
-											? "text-orange-500"
-											: "text-gray-700";
-
-								return (
-									<p className={`font-semibold ${style}`}>
-										<strong>Deadline:</strong> in{" "}
-										{deadlineDays} days
-									</p>
-								);
-							})()}
-					</div>
-
-					<p className="mt-4 text-sm text-gray-600">
-						<span className="font-medium">Members:</span>{" "}
-						{project.projectMembers?.length
-							? project.projectMembers
-									.map((m) =>
-										typeof m === "string"
-											? m
-											: `${m.firstname} ${m.lastname}`,
-									)
-									.join(", ")
-							: "Not assigned"}
-					</p>
-				</div>
-			</div>
-
-			{/* ================= RIGHT SIDE ================= */}
-			<div className="bg-white border rounded-lg p-5 shadow-sm">
-				<h2 className="text-lg font-semibold mb-4">Tasks</h2>
-
-				{project.tasks.length === 0 && (
-					<p className="text-gray-500">No tasks</p>
-				)}
-
-				<div className="space-y-3">
-					{project.tasks.map((task) => {
-						const isEditingThisTask =
-							editingRecord?.taskId === task._id;
-
-						return (
-							<div
-								key={task._id}
-								className="border rounded-lg p-4 bg-white shadow-sm"
-							>
-								{/* TASK HEADER */}
-								<div className="mb-3">
-									<p className="font-semibold">
-										{task.taskTitle}
-									</p>
-									<p className="text-sm text-gray-500">
-										Status: {task.taskStatus}
-									</p>
-								</div>
-
-								{/* MEMBER */}
-								<p className="text-sm text-gray-600 mb-3">
-									Member:{" "}
-									{!task.taskMember
-										? "Unassigned"
-										: typeof task.taskMember === "string"
-											? task.taskMember
-											: `${task.taskMember.firstname} ${task.taskMember.lastname}`}
-								</p>
-
-								{/* =========================
-			   TIME RECORDS (TOP)
-			========================= */}
-
-								<div className="mb-3">
-									<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-										Time records
-									</h4>
-
-									<div className="space-y-1 text-sm">
-										{task.timeSpentRecords?.length ? (
-											task.timeSpentRecords.map((r) => (
-												<div
-													key={r._id}
-													className="flex justify-between items-center"
-												>
-													<span className="text-gray-700">
-														{new Date(
-															r.date,
-														).toLocaleDateString()}{" "}
-														| {r.hours}h {r.minutes}
-														m
-													</span>
-
-													<div className="flex gap-2 text-xs">
-														<button
-															className="text-blue-600 hover:underline"
-															onClick={() =>
-																setEditingRecord(
-																	{
-																		taskId: task._id!,
-																		recordId:
-																			r._id!,
-																		form: {
-																			date: r.date
-																				.toString()
-																				.split(
-																					"T",
-																				)[0],
-																			hours: r.hours,
-																			minutes:
-																				r.minutes,
-																		},
-																	},
-																)
-															}
-														>
-															Edit
-														</button>
-
-														<button
-															className="text-red-600 hover:underline"
-															onClick={() =>
-																deleteTimeRecord(
-																	task._id!,
-																	r._id!,
-																)
-															}
-														>
-															Delete
-														</button>
-													</div>
-												</div>
-											))
-										) : (
-											<p className="text-gray-400 text-sm">
-												No time records yet
-											</p>
-										)}
-									</div>
-								</div>
-
-								{/* =========================
-			   EDIT FORM (DIRECTLY BELOW RECORD)
-			========================= */}
-
-								{isEditingThisTask && (
-									<div className="mb-3 border-t pt-3">
-										<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-											Edit time record
-										</h4>
-
-										<div className="flex gap-2">
-											<input
-												type="date"
-												className="border p-1 text-sm"
-												value={editingRecord!.form.date}
-												onChange={(e) =>
-													setEditingRecord((prev) =>
-														prev
-															? {
-																	...prev,
-																	form: {
-																		...prev.form,
-																		date: e
-																			.target
-																			.value,
-																	},
-																}
-															: null,
-													)
-												}
-											/>
-
-											<input
-												type="number"
-												className="border p-1 w-16 text-sm"
-												value={
-													editingRecord!.form.hours
-												}
-												onChange={(e) =>
-													setEditingRecord((prev) =>
-														prev
-															? {
-																	...prev,
-																	form: {
-																		...prev.form,
-																		hours: Number(
-																			e
-																				.target
-																				.value,
-																		),
-																	},
-																}
-															: null,
-													)
-												}
-											/>
-
-											<input
-												type="number"
-												className="border p-1 w-16 text-sm"
-												value={
-													editingRecord!.form.minutes
-												}
-												onChange={(e) =>
-													setEditingRecord((prev) =>
-														prev
-															? {
-																	...prev,
-																	form: {
-																		...prev.form,
-																		minutes:
-																			Number(
-																				e
-																					.target
-																					.value,
-																			),
-																	},
-																}
-															: null,
-													)
-												}
-											/>
-
-											<button
-												onClick={updateTimeRecord}
-												className="bg-green-600 text-white px-3 text-sm rounded"
-											>
-												Save
-											</button>
-
-											<button
-												onClick={() =>
-													setEditingRecord(null)
-												}
-												className="bg-gray-300 px-3 text-sm rounded"
-											>
-												Cancel
-											</button>
-										</div>
-									</div>
-								)}
-
-								{/* =========================
-			   ADD TIME FORM (BOTTOM)
-			========================= */}
-
-								{canTrackTime(task) && (
-									<div className="border-t pt-3 mt-3">
-										<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-											Add time record
-										</h4>
-
-										<div className="flex gap-2">
-											<input
-												type="date"
-												className="border p-1 text-sm"
-												value={
-													getTaskForm(task._id!).date
-												}
-												onChange={(e) =>
-													setTaskForms((prev) => ({
-														...prev,
-														[task._id!]: {
-															...getTaskForm(
-																task._id!,
-															),
-															date: e.target
-																.value,
-														},
-													}))
-												}
-											/>
-
-											<input
-												type="number"
-												placeholder="h"
-												className="border p-1 w-16 text-sm"
-												value={
-													getTaskForm(task._id!).hours
-												}
-												onChange={(e) =>
-													setTaskForms((prev) => ({
-														...prev,
-														[task._id!]: {
-															...getTaskForm(
-																task._id!,
-															),
-															hours: Number(
-																e.target.value,
-															),
-														},
-													}))
-												}
-											/>
-
-											<input
-												type="number"
-												placeholder="m"
-												className="border p-1 w-16 text-sm"
-												value={
-													getTaskForm(task._id!)
-														.minutes
-												}
-												onChange={(e) =>
-													setTaskForms((prev) => ({
-														...prev,
-														[task._id!]: {
-															...getTaskForm(
-																task._id!,
-															),
-															minutes: Number(
-																e.target.value,
-															),
-														},
-													}))
-												}
-											/>
-
-											<button
-												onClick={() =>
-													addTimeRecord(task._id!)
-												}
-												className="bg-blue-600 text-white px-3 text-sm rounded"
-											>
-												Add
-											</button>
-										</div>
-									</div>
-								)}
-							</div>
-						);
-					})}
-				</div>
-			</div>
-
+		<>
 			{/* NAV */}
-			<div className="flex gap-3 mt-6">
+			<div className="flex justify-end gap-3 mb-6">
 				{user?.role === "admin" && (
 					<Link
 						to={`/admin/projects/${project._id}/edit`}
@@ -560,7 +190,410 @@ const ProjectDetailsPage = () => {
 					Back
 				</Link>
 			</div>
-		</div>
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* ================= LEFT SIDE ================= */}
+
+				<div className="space-y-6">
+					{/* PROJECT CARD */}
+					<div className="bg-white border rounded-lg p-5 shadow-sm">
+						<h1 className="text-2xl font-bold">
+							{project.projectTitle}
+						</h1>
+
+						<p className="text-gray-600 mt-1">
+							{project.projectDescription}
+						</p>
+
+						<div className="mt-4 text-sm text-gray-600 space-y-1">
+							<p>Status: {project.projectStatus}</p>
+
+							<p>
+								Start:{" "}
+								{project.startDate
+									? new Date(
+											project.startDate,
+										).toLocaleDateString()
+									: "-"}
+							</p>
+
+							<p>
+								End:{" "}
+								{project.endDate
+									? new Date(
+											project.endDate,
+										).toLocaleDateString()
+									: "-"}
+							</p>
+
+							{deadlineDays !== null &&
+								(() => {
+									const style =
+										deadlineDays <= DEADLINE_CRITICAL_DAYS
+											? "text-red-600"
+											: deadlineDays <=
+												  DEADLINE_WARNING_DAYS
+												? "text-orange-500"
+												: "text-gray-700";
+
+									return (
+										<p className={`font-semibold ${style}`}>
+											<strong>Deadline:</strong> in{" "}
+											{deadlineDays} days
+										</p>
+									);
+								})()}
+						</div>
+
+						<p className="mt-4 text-sm text-gray-600">
+							<span className="font-medium">Assigned to:</span>{" "}
+							{project.projectMembers?.length
+								? project.projectMembers
+										.map((m) =>
+											typeof m === "string"
+												? m
+												: `${m.firstname} ${m.lastname}`,
+										)
+										.join(", ")
+								: "Not assigned"}
+						</p>
+					</div>
+				</div>
+
+				{/* ================= RIGHT SIDE ================= */}
+				<div className="bg-white border rounded-lg p-5 shadow-sm">
+					<h2 className="text-lg font-semibold mb-4">Tasks</h2>
+
+					{project.tasks.length === 0 && (
+						<p className="text-gray-500">No tasks</p>
+					)}
+
+					<div className="space-y-3">
+						{project.tasks.map((task) => {
+							const isEditingThisTask =
+								editingRecord?.taskId === task._id;
+
+							return (
+								<div
+									key={task._id}
+									className="border rounded-lg p-4 bg-white shadow-sm"
+								>
+									{/* TASK HEADER */}
+									<div className="mb-3">
+										<p className="font-semibold">
+											{task.taskTitle}
+										</p>
+										<p className="text-sm text-gray-500">
+											Status: {task.taskStatus}
+										</p>
+									</div>
+
+									{/* MEMBER */}
+									<p className="text-sm text-gray-600 mb-3">
+										Assigned to:{" "}
+										{!task.taskMember
+											? "Unassigned"
+											: typeof task.taskMember ===
+												  "string"
+												? task.taskMember
+												: `${task.taskMember.firstname} ${task.taskMember.lastname}`}
+									</p>
+
+									{/* =========================
+			   TIME RECORDS (TOP)
+			========================= */}
+
+									<div className="mb-3">
+										<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+											Time records
+										</h4>
+
+										<div className="space-y-1 text-sm">
+											{task.timeSpentRecords?.length ? (
+												task.timeSpentRecords.map(
+													(r) => (
+														<div
+															key={r._id}
+															className="flex justify-between items-center"
+														>
+															<span className="text-gray-700">
+																{new Date(
+																	r.date,
+																).toLocaleDateString()}{" "}
+																| {r.hours}h{" "}
+																{r.minutes}m
+															</span>
+
+															{canTrackTime(
+																task,
+															) && (
+																<div className="flex gap-2 text-xs">
+																	<button
+																		type="button"
+																		className="text-blue-600 hover:underline"
+																		onClick={() =>
+																			setEditingRecord(
+																				{
+																					taskId: task._id!,
+																					recordId:
+																						r._id!,
+																					form: {
+																						date: r.date
+																							.toString()
+																							.split(
+																								"T",
+																							)[0],
+																						hours: r.hours,
+																						minutes:
+																							r.minutes,
+																					},
+																				},
+																			)
+																		}
+																	>
+																		Edit
+																	</button>
+
+																	<button
+																		type="button"
+																		className="text-red-600 hover:underline"
+																		onClick={() =>
+																			deleteTimeRecord(
+																				task._id!,
+																				r._id!,
+																			)
+																		}
+																	>
+																		Delete
+																	</button>
+																</div>
+															)}
+														</div>
+													),
+												)
+											) : (
+												<p className="text-gray-400 text-sm">
+													No time records yet
+												</p>
+											)}
+										</div>
+									</div>
+
+									{/* =========================
+			   EDIT FORM (DIRECTLY BELOW RECORD)
+			========================= */}
+
+									{isEditingThisTask && (
+										<div className="mb-3 border-t pt-3">
+											<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+												Edit time record
+											</h4>
+
+											<div className="flex gap-2">
+												<input
+													type="date"
+													className="border p-1 text-sm"
+													value={
+														editingRecord!.form.date
+													}
+													onChange={(e) =>
+														setEditingRecord(
+															(prev) =>
+																prev
+																	? {
+																			...prev,
+																			form: {
+																				...prev.form,
+																				date: e
+																					.target
+																					.value,
+																			},
+																		}
+																	: null,
+														)
+													}
+												/>
+
+												<input
+													type="number"
+													className="border p-1 w-16 text-sm"
+													value={
+														editingRecord!.form
+															.hours
+													}
+													onChange={(e) =>
+														setEditingRecord(
+															(prev) =>
+																prev
+																	? {
+																			...prev,
+																			form: {
+																				...prev.form,
+																				hours: Number(
+																					e
+																						.target
+																						.value,
+																				),
+																			},
+																		}
+																	: null,
+														)
+													}
+												/>
+
+												<input
+													type="number"
+													className="border p-1 w-16 text-sm"
+													value={
+														editingRecord!.form
+															.minutes
+													}
+													onChange={(e) =>
+														setEditingRecord(
+															(prev) =>
+																prev
+																	? {
+																			...prev,
+																			form: {
+																				...prev.form,
+																				minutes:
+																					Number(
+																						e
+																							.target
+																							.value,
+																					),
+																			},
+																		}
+																	: null,
+														)
+													}
+												/>
+
+												<button
+													onClick={updateTimeRecord}
+													className="bg-green-600 text-white px-3 text-sm rounded"
+												>
+													Save
+												</button>
+
+												<button
+													onClick={() =>
+														setEditingRecord(null)
+													}
+													className="bg-gray-300 px-3 text-sm rounded"
+												>
+													Cancel
+												</button>
+											</div>
+										</div>
+									)}
+
+									{/* =========================
+			   ADD TIME FORM (BOTTOM)
+			========================= */}
+
+									{canTrackTime(task) && (
+										<div className="border-t pt-3 mt-3">
+											<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+												Add time record
+											</h4>
+
+											<div className="flex gap-2">
+												<input
+													type="date"
+													className="border p-1 text-sm"
+													value={
+														getTaskForm(task._id!)
+															.date
+													}
+													onChange={(e) =>
+														setTaskForms(
+															(prev) => ({
+																...prev,
+																[task._id!]: {
+																	...getTaskForm(
+																		task._id!,
+																	),
+																	date: e
+																		.target
+																		.value,
+																},
+															}),
+														)
+													}
+												/>
+
+												<input
+													type="number"
+													placeholder="h"
+													className="border p-1 w-16 text-sm"
+													value={
+														getTaskForm(task._id!)
+															.hours
+													}
+													onChange={(e) =>
+														setTaskForms(
+															(prev) => ({
+																...prev,
+																[task._id!]: {
+																	...getTaskForm(
+																		task._id!,
+																	),
+																	hours: Number(
+																		e.target
+																			.value,
+																	),
+																},
+															}),
+														)
+													}
+												/>
+
+												<input
+													type="number"
+													placeholder="m"
+													className="border p-1 w-16 text-sm"
+													value={
+														getTaskForm(task._id!)
+															.minutes
+													}
+													onChange={(e) =>
+														setTaskForms(
+															(prev) => ({
+																...prev,
+																[task._id!]: {
+																	...getTaskForm(
+																		task._id!,
+																	),
+																	minutes:
+																		Number(
+																			e
+																				.target
+																				.value,
+																		),
+																},
+															}),
+														)
+													}
+												/>
+
+												<button
+													onClick={() =>
+														addTimeRecord(task._id!)
+													}
+													className="bg-blue-600 text-white px-3 text-sm rounded"
+												>
+													Add
+												</button>
+											</div>
+										</div>
+									)}
+								</div>
+							);
+						})}
+					</div>
+				</div>
+			</div>
+		</>
 	);
 };
 

@@ -167,7 +167,7 @@ const ProjectSchema = new Schema(
 const Project = model("Project", ProjectSchema, "projects");
 
 /* =========================
-   ZOD (CLEAN + STRICT INPUT RULES)
+   ZOD
 ========================= */
 
 const ProjectCreateCheckSchema = z.object({

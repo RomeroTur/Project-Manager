@@ -71,12 +71,21 @@ const ProjectsPage = () => {
 
 	return (
 		<div className="space-y-6">
-			{/* HEADER */}
-			<div>
-				<h1 className="text-2xl font-bold">Projects</h1>
-				{/*<p className="text-sm text-gray-500">
-					Overview of all assigned projects
-				</p>*/}
+			<div className="flex items-center justify-between">
+				{user?.role === "admin" ? (
+					<>
+						<h1 className="text-2xl font-bold">Projects</h1>
+
+						<Link
+							to="/admin/projects/create"
+							className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+						>
+							Create Project
+						</Link>
+					</>
+				) : (
+					<h1 className="text-2xl font-bold">My Projects</h1>
+				)}
 			</div>
 
 			{/* PROJECT LIST */}
@@ -185,7 +194,7 @@ const ProjectsPage = () => {
 									</>
 								) : (
 									<Link
-										className="text-sm text-blue-600 hover:underline"
+										className="inline-block px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
 										to={`/projects/${project._id}`}
 									>
 										View →

@@ -4,6 +4,36 @@ import { Link } from "react-router-dom";
 import type { DashboardProject } from "../types/DashboardProject";
 import type { DashboardUser } from "../types/DashboardUser";
 
+/* =========================
+   DEADLINE CONFIG
+========================= */
+
+const DEADLINE_WARNING_DAYS = 14;
+const DEADLINE_CRITICAL_DAYS = 7;
+
+const getDeadlineStyle = (days: number | null) => {
+	if (days === null) return {};
+
+	if (days <= DEADLINE_CRITICAL_DAYS) {
+		return {
+			text: "text-red-600",
+			card: "border-red-200 shadow-red-100",
+		};
+	}
+
+	if (days <= DEADLINE_WARNING_DAYS) {
+		return {
+			text: "text-orange-500",
+			card: "border-orange-200 shadow-orange-100",
+		};
+	}
+
+	return {
+		text: "text-gray-600",
+		card: "",
+	};
+};
+
 const UserDashboard = () => {
 	const [projects, setProjects] = useState<DashboardProject[]>([]);
 	const [users, setUsers] = useState<DashboardUser[]>([]);
@@ -59,105 +89,93 @@ const UserDashboard = () => {
 	};
 
 	return (
-		<div className="grid grid-cols-2 gap-8">
-			{/* ================= LEFT: PROJECTS ================= */}
-			<div>
-				<h2 className="text-2xl font-bold mb-4">My Projects</h2>
+		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+			{/* ================= PROJECTS ================= */}
+			<div className="space-y-4">
+				<h2 className="text-2xl font-bold">My Projects</h2>
 
-				{loadingProjects && <p>Loading projects...</p>}
+				{loadingProjects && (
+					<p className="text-gray-500">Loading projects...</p>
+				)}
 
 				{projects.map((project) => {
-					const sortedTasks = [...project.tasks].sort(
-						(a: any, b: any) => {
-							// user task first
-							const mineA =
-								typeof a.taskMember === "string"
-									? false
-									: false;
-
-							const mineB =
-								typeof b.taskMember === "string"
-									? false
-									: false;
-
-							return Number(mineB) - Number(mineA);
-						},
+					const deadline = calculateDaysLeft(
+						project.startDate,
+						project.endDate,
 					);
+
+					const deadlineStyle = getDeadlineStyle(deadline);
 
 					return (
 						<div
 							key={project._id}
-							className="border rounded p-4 mb-4"
+							className={`bg-white border rounded-lg p-5 shadow-sm hover:shadow-md transition flex flex-col ${deadlineStyle.card}`}
 						>
-							<h3 className="font-bold text-lg">
+							<h3 className="text-lg font-semibold">
 								{project.projectTitle}
 							</h3>
 
-							<p>Status: {project.projectStatus}</p>
-
-							<p>
-								Start:{" "}
-								{project.startDate
-									? new Date(
-											project.startDate,
-										).toLocaleDateString()
-									: "-"}
+							<p className="text-sm text-gray-600 mt-1">
+								Status: {project.projectStatus}
 							</p>
 
-							<p>
-								End:{" "}
-								{project.endDate
-									? new Date(
-											project.endDate,
-										).toLocaleDateString()
-									: "-"}
-							</p>
-
-							{calculateDaysLeft(
-								project.startDate,
-								project.endDate,
-							) !== null && (
+							<div className="mt-3 text-sm text-gray-500 space-y-1">
 								<p>
-									Deadline:{" "}
-									{calculateDaysLeft(
-										project.startDate,
-										project.endDate,
-									)}{" "}
-									days
+									Start:{" "}
+									{project.startDate
+										? new Date(
+												project.startDate,
+											).toLocaleDateString()
+										: "-"}
 								</p>
-							)}
 
-							{/* TASKS */}
-							<div className="mt-3">
-								<h4 className="font-semibold">Tasks</h4>
+								<p>
+									End:{" "}
+									{project.endDate
+										? new Date(
+												project.endDate,
+											).toLocaleDateString()
+										: "-"}
+								</p>
 
-								{sortedTasks.map((task: any) => (
-									<div
-										key={task._id}
-										className="border p-2 mt-2"
+								{deadline !== null && (
+									<p
+										className={`font-semibold ${deadlineStyle.text}`}
 									>
-										<p>
-											<strong>{task.taskTitle}</strong>
-										</p>
-
-										<p>Status: {task.taskStatus}</p>
-
-										<p>
-											Member:{" "}
-											{!task.taskMember
-												? "Unassigned"
-												: typeof task.taskMember ===
-													  "string"
-													? task.taskMember
-													: `${task.taskMember.firstname} ${task.taskMember.lastname}`}
-										</p>
-									</div>
-								))}
+										Deadline: {deadline} days
+									</p>
+								)}
 							</div>
 
-							<div className="flex gap-3 mt-3">
-								<Link to={`/projects/${project._id}`}>
-									View
+							<div className="mt-4">
+								<h4 className="text-sm font-semibold text-gray-700">
+									Members
+								</h4>
+
+								{project.projectMembers?.length ? (
+									<div className="mt-2 text-sm text-gray-600">
+										{project.projectMembers.map(
+											(member) => (
+												<p key={member._id}>
+													{member.firstname}{" "}
+													{member.lastname}
+												</p>
+											),
+										)}
+									</div>
+								) : (
+									<p className="text-sm text-gray-400 mt-2">
+										No members assigned
+									</p>
+								)}
+							</div>
+
+							<div className="mt-auto pt-4 border-t border-gray-100">
+								<Link
+									to={`/projects/${project._id}`}
+									className="inline-block px-3 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+								>
+									View →
 								</Link>
 							</div>
 						</div>
@@ -165,27 +183,41 @@ const UserDashboard = () => {
 				})}
 			</div>
 
-			{/* ================= RIGHT: USERS ================= */}
-			<div>
-				<h2 className="text-2xl font-bold mb-4">Users</h2>
+			{/* ================= USERS ================= */}
+			<div className="space-y-4">
+				<h2 className="text-2xl font-bold">Users</h2>
 
-				{loadingUsers && <p>Loading users...</p>}
+				{loadingUsers && (
+					<p className="text-gray-500">Loading users...</p>
+				)}
 
 				{users.map((user) => (
-					<div key={user._id} className="border rounded p-4 mb-4">
-						<h3 className="font-bold text-lg">
+					<div
+						key={user._id}
+						className="bg-white border rounded-lg p-5 shadow-sm hover:shadow-md transition flex flex-col"
+					>
+						<h3 className="text-lg font-semibold">
 							{user.firstname} {user.lastname}
 						</h3>
 
-						<p>Available: {user.available ? "Yes" : "No"}</p>
+						<div className="mt-2 text-sm text-gray-600 space-y-1">
+							<p>Available: {user.available ? "Yes" : "No"}</p>
 
-						<p>
-							Skills:{" "}
-							{user.skills.length ? user.skills.join(", ") : "-"}
-						</p>
+							<p>
+								Skills:{" "}
+								{user.skills.length
+									? user.skills.join(", ")
+									: "-"}
+							</p>
+						</div>
 
-						<div className="mt-3">
-							<Link to={`/users/${user._id}`}>View</Link>
+						<div className="mt-auto pt-4 border-t border-gray-100">
+							<Link
+								to={`/users/${user._id}`}
+								className="inline-block px-3 py-1.5 text-sm font-medium rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+							>
+								View →
+							</Link>
 						</div>
 					</div>
 				))}

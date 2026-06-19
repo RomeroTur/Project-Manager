@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import type { User } from "../types/User";
 
 const UserDetailsPage = () => {
 	const { id } = useParams();
+	const navigate = useNavigate();
 	const { user: authUser } = useAuth();
 	const [user, setUser] = useState<User | null>(null);
 
@@ -21,104 +22,141 @@ const UserDetailsPage = () => {
 		load();
 	}, [id]);
 
-	if (!user) {
-		return <p>Loading...</p>;
-	}
+	if (!user) return <p className="text-gray-500">Loading...</p>;
 
 	return (
-		<div className="space-y-6">
-			<div>
-				<h1 className="text-2xl font-bold">
+		<>
+			{/* HEADER */}
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+				<h1 className="text-2xl font-bold ">
 					{user.firstname} {user.lastname}
 				</h1>
-			</div>
 
-			<div className="border p-4">
-				<h2 className="font-semibold mb-2">User Information</h2>
+				{/* =========================
+					ACTIONS
+				========================= */}
+				<div className="flex gap-3 lg:justify-end items-center">
+					{authUser?.role === "admin" && (
+						<Link
+							to={`/admin/users/${user._id}/edit`}
+							className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm"
+						>
+							Edit User
+						</Link>
+					)}
 
-				<p>
-					<strong>Role:</strong> {user.role}
-				</p>
-
-				<p>
-					<strong>Available:</strong> {user.available ? "Yes" : "No"}
-				</p>
-
-				<p>
-					<strong>Email:</strong> {user.email}
-				</p>
-
-				<p>
-					<strong>Birthday:</strong>{" "}
-					{user.personal?.birthday
-						? new Date(user.personal.birthday).toLocaleDateString()
-						: "Not set"}
-				</p>
-
-				<p>
-					<strong>Telephone:</strong>{" "}
-					{user.personal?.tel || "Not set"}
-				</p>
-
-				<p>
-					<strong>Address:</strong>{" "}
-					{user.personal?.address || "Not set"}
-				</p>
-
-				<p>
-					<strong>Description:</strong>{" "}
-					{user.personal?.description || "Not set"}
-				</p>
-
-				<p>
-					<strong>Skills:</strong>{" "}
-					{user.skills.length
-						? user.skills.join(", ")
-						: "No skills assigned"}
-				</p>
-			</div>
-
-			<div className="border p-4">
-				<h2 className="font-semibold mb-2">Assigned Tasks</h2>
-
-				{!user.assignedTasks?.length && <p>No tasks assigned</p>}
-
-				{user.assignedTasks?.map((task, index) => (
-					<div
-						key={`${task.projectId}-${index}`}
-						className="border p-3 mb-2"
+					<button
+						onClick={() => navigate(-1)}
+						className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition text-sm"
 					>
+						Back
+					</button>
+				</div>
+			</div>
+
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				{/* =========================
+				LEFT SIDE - USER INFO
+			========================= */}
+				<div className="space-y-6">
+					{/* INFO CARD */}
+					<div className="bg-white border rounded-lg p-5 shadow-sm space-y-2">
+						<h2 className="text-lg font-semibold mb-2">
+							User Information
+						</h2>
+
 						<p>
-							<strong>Project:</strong> {task.projectTitle}
+							<span className="font-medium">Role:</span>{" "}
+							{user.role}
 						</p>
 
 						<p>
-							<strong>Task:</strong> {task.taskTitle}
+							<span className="font-medium">Available:</span>{" "}
+							{user.available ? "Yes" : "No"}
 						</p>
 
 						<p>
-							<strong>Status:</strong> {task.taskStatus}
+							<span className="font-medium">Email:</span>{" "}
+							{user.email}
 						</p>
 
 						<p>
-							<strong>Time Spent:</strong>{" "}
-							{task.timeSpentTotal || "0h 0m"}
+							<span className="font-medium">Birthday:</span>{" "}
+							{user.personal?.birthday
+								? new Date(
+										user.personal.birthday,
+									).toLocaleDateString()
+								: "Not set"}
+						</p>
+
+						<p>
+							<span className="font-medium">Telephone:</span>{" "}
+							{user.personal?.tel || "Not set"}
+						</p>
+
+						<p>
+							<span className="font-medium">Address:</span>{" "}
+							{user.personal?.address || "Not set"}
+						</p>
+
+						<p>
+							<span className="font-medium">Description:</span>{" "}
+							{user.personal?.description || "Not set"}
+						</p>
+
+						<p>
+							<span className="font-medium">Skills:</span>{" "}
+							{user.skills.length
+								? user.skills.join(", ")
+								: "No skills assigned"}
 						</p>
 					</div>
-				))}
-			</div>
-
-			{authUser?.role === "admin" && (
-				<div>
-					<Link
-						to={`/admin/users/${user._id}/edit`}
-						className="border px-3 py-1"
-					>
-						Edit User
-					</Link>
 				</div>
-			)}
-		</div>
+
+				{/* =========================
+				RIGHT SIDE - TASKS
+			========================= */}
+				<div className="space-y-6">
+					<div className="bg-white border rounded-lg p-5 shadow-sm">
+						<h2 className="text-lg font-semibold mb-4">
+							Assigned Tasks
+						</h2>
+
+						{!user.assignedTasks?.length ? (
+							<p className="text-sm text-gray-500">
+								No tasks assigned
+							</p>
+						) : (
+							<div className="space-y-3">
+								{user.assignedTasks.map((task, index) => (
+									<div
+										key={`${task.projectId}-${index}`}
+										className="border rounded-md p-3 bg-gray-50 text-sm"
+									>
+										<p className="font-medium">
+											{task.projectTitle}
+										</p>
+
+										<p className="text-gray-700">
+											{task.taskTitle}
+										</p>
+
+										<p className="text-gray-600">
+											Status: {task.taskStatus}
+										</p>
+
+										<p className="text-gray-500">
+											Time spent:{" "}
+											{task.timeSpentTotal || "0h 0m"}
+										</p>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		</>
 	);
 };
 
