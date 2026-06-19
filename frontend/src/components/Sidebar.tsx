@@ -9,8 +9,7 @@ const Sidebar = () => {
 	const dashboardLink = user.role === "admin" ? "/admin" : "/dashboard";
 	const projectsLink =
 		user.role === "admin" ? "/admin/projects" : "/projects";
-	const usersLink =
-		user.role === "admin" ? "/admin/users" : `/users/${user._id}`;
+	const usersLink = user.role === "admin" ? "/admin/users" : "/users";
 
 	return (
 		<aside className="w-64 bg-gray-900 text-white p-5">
@@ -31,8 +30,19 @@ const Sidebar = () => {
 					Projects
 				</Link>
 
+				{/*<Link
+					className="hover:bg-gray-800 p-2 rounded"
+					to="/admin/users"
+				>
+					Users
+				</Link>*/}
+
 				<Link className="hover:bg-gray-800 p-2 rounded" to={usersLink}>
 					Users
+				</Link>
+
+				<Link className="hover:bg-gray-800 p-2 rounded" to="/profile">
+					My Profile
 				</Link>
 			</nav>
 		</aside>

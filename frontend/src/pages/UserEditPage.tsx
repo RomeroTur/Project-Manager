@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 const UserEditPage = () => {
+	const { user: authUser } = useAuth();
+
 	const { id } = useParams();
 	const navigate = useNavigate();
 
@@ -147,13 +150,15 @@ const UserEditPage = () => {
 					Cancel
 				</button>
 
-				<button
-					type="button"
-					onClick={handleDelete}
-					className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
-				>
-					Delete User
-				</button>
+				{authUser?._id !== id && (
+					<button
+						type="button"
+						onClick={handleDelete}
+						className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm"
+					>
+						Delete User
+					</button>
+				)}
 			</div>
 
 			{/* =========================

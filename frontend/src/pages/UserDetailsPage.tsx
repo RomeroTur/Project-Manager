@@ -5,13 +5,21 @@ import type { User } from "../types/User";
 
 const UserDetailsPage = () => {
 	const { id } = useParams();
-	const navigate = useNavigate();
 	const { user: authUser } = useAuth();
+	const navigate = useNavigate();
+
+	const isProfile = !id;
+	const targetId = isProfile ? "me" : id;
+
 	const [user, setUser] = useState<User | null>(null);
 
 	useEffect(() => {
 		const load = async () => {
-			const res = await fetch(`http://localhost:3000/users/${id}`, {
+			const url = isProfile
+				? "http://localhost:3000/users/me"
+				: `http://localhost:3000/users/${targetId}`;
+
+			const res = await fetch(url, {
 				credentials: "include",
 			});
 

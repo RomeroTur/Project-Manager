@@ -189,83 +189,133 @@ const CreateProjectPage = () => {
 	   UI
 	========================= */
 	return (
-		<form onSubmit={handleSubmit} className="form grid grid-cols-2 gap-8">
-			{/* LEFT SIDE */}
-			<div className="space-y-4">
-				<h1>Create Project</h1>
+		<form
+			onSubmit={handleSubmit}
+			className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+		>
+			{/* =========================
+		   LEFT SIDE - PROJECT INFO CARD
+		========================= */}
+			<div className="bg-white border rounded-lg p-5 shadow-sm space-y-4">
+				<h1 className="text-2xl font-bold">Create Project</h1>
 
-				{error && <p className="text-red-500 font-semibold">{error}</p>}
+				{error && (
+					<p className="text-red-500 font-medium text-sm">{error}</p>
+				)}
 
-				<input
-					placeholder="Project title"
-					value={projectTitle}
-					onChange={(e) => setProjectTitle(e.target.value)}
-				/>
-
-				<textarea
-					placeholder="Description"
-					value={projectDescription}
-					onChange={(e) => setProjectDescription(e.target.value)}
-				/>
-
-				<div className="flex gap-4">
+				<div className="space-y-3">
 					<input
-						type="date"
-						value={startDate}
-						onChange={(e) => setStartDate(e.target.value)}
+						className="w-full border p-2 rounded"
+						placeholder="Project title"
+						value={projectTitle}
+						onChange={(e) => setProjectTitle(e.target.value)}
 					/>
 
-					<input
-						type="date"
-						value={endDate}
-						onChange={(e) => setEndDate(e.target.value)}
+					<textarea
+						className="w-full border p-2 rounded min-h-[120px]"
+						placeholder="Description"
+						value={projectDescription}
+						onChange={(e) => setProjectDescription(e.target.value)}
 					/>
+
+					<div className="flex gap-3">
+						<input
+							type="date"
+							className="w-full border p-2 rounded"
+							value={startDate}
+							onChange={(e) => setStartDate(e.target.value)}
+						/>
+
+						<input
+							type="date"
+							className="w-full border p-2 rounded"
+							value={endDate}
+							onChange={(e) => setEndDate(e.target.value)}
+						/>
+					</div>
 				</div>
 			</div>
 
-			{/* RIGHT SIDE */}
-			<div>
-				<button type="button" onClick={addTask}>
-					Add Task
-				</button>
+			{/* =========================
+		   RIGHT SIDE - TASKS CARD
+		========================= */}
+			<div className="bg-white border rounded-lg p-5 shadow-sm">
+				<div className="flex items-center justify-between mb-4">
+					<h2 className="text-lg font-semibold">Tasks</h2>
 
-				{tasks.map((task, i) => (
-					<div key={i} className="border p-3 mt-2">
-						<input
-							placeholder="Task title"
-							value={task.taskTitle}
-							onChange={(e) =>
-								updateTask(i, "taskTitle", e.target.value)
-							}
-						/>
+					<button
+						type="button"
+						onClick={addTask}
+						className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+					>
+						Add Task
+					</button>
+				</div>
 
-						<select
-							value={task.taskMember}
-							onChange={(e) =>
-								updateTask(i, "taskMember", e.target.value)
-							}
+				{tasks.length === 0 && (
+					<p className="text-sm text-gray-500">No tasks added yet</p>
+				)}
+
+				<div className="space-y-3">
+					{tasks.map((task, i) => (
+						<div
+							key={i}
+							className="border rounded-md p-3 bg-gray-50 space-y-2"
 						>
-							<option value="">Unassigned</option>
+							<input
+								className="w-full border p-2 rounded"
+								placeholder="Task title"
+								value={task.taskTitle}
+								onChange={(e) =>
+									updateTask(i, "taskTitle", e.target.value)
+								}
+							/>
 
-							{users.map((u) => (
-								<option key={u._id} value={u._id}>
-									{u.firstname} {u.lastname}
-								</option>
-							))}
-						</select>
+							<select
+								className="w-full border p-2 rounded"
+								value={task.taskMember}
+								onChange={(e) =>
+									updateTask(i, "taskMember", e.target.value)
+								}
+							>
+								<option value="">Unassigned</option>
 
-						<button type="button" onClick={() => removeTask(i)}>
-							Delete
-						</button>
-					</div>
-				))}
+								{users.map((u) => (
+									<option key={u._id} value={u._id}>
+										{u.firstname} {u.lastname}
+									</option>
+								))}
+							</select>
+
+							<button
+								type="button"
+								onClick={() => removeTask(i)}
+								className="text-sm text-red-600 hover:text-red-800"
+							>
+								Delete Task
+							</button>
+						</div>
+					))}
+				</div>
 			</div>
 
-			{/* ACTIONS */}
-			<div className="col-span-2 flex gap-4">
-				<button type="submit">Create Project</button>
-				<button type="button" onClick={() => navigate(-1)}>
+			{/* =========================
+		   ACTIONS (FULL WIDTH)
+		========================= */}
+			<div className="lg:col-span-2 flex justify-end gap-3">
+				<button
+					type="button"
+					onClick={() => navigate(-1)}
+					className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition text-sm"
+				>
 					Cancel
+				</button>
+
+				<button
+					type="submit"
+					className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm"
+				>
+					Create Project
 				</button>
 			</div>
 		</form>

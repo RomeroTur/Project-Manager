@@ -27,32 +27,28 @@ function App() {
 	return (
 		<BrowserRouter>
 			<Routes>
-				{/* =========================
-				    PUBLIC ROUTES
-				========================= */}
+				{/* PUBLIC */}
 				<Route path="/" element={<Navigate to="/login" replace />} />
-
 				<Route path="/login" element={<LoginPage />} />
 
-				{/* =========================
-				    PROTECTED AREA (ALL LOGGED USERS)
-				========================= */}
+				{/* PROTECTED */}
 				<Route element={<ProtectedRoute />}>
 					<Route element={<AppLayout />}>
 						{/* DASHBOARD */}
 						<Route path="/dashboard" element={<UserDashboard />} />
 
-						{/* PROJECTS (USER + ADMIN) */}
-						<Route path="/projects" element={<ProjectsPage />} />
+						{/* PROFILE */}
+						<Route path="/profile" element={<UserDetailsPage />} />
 
+						{/* PROJECTS */}
+						<Route path="/projects" element={<ProjectsPage />} />
 						<Route
 							path="/projects/:id"
 							element={<ProjectDetailsPage />}
 						/>
 
-						{/* USERS (ALL USERS CAN VIEW LIST) */}
+						{/* USERS (LIST + VIEW) */}
 						<Route path="/users" element={<UserListPage />} />
-
 						<Route
 							path="/users/:id"
 							element={<UserDetailsPage />}
@@ -60,51 +56,41 @@ function App() {
 					</Route>
 				</Route>
 
-				{/* =========================
-				    ADMIN AREA
-				========================= */}
+				{/* ADMIN */}
 				<Route element={<ProtectedRoute />}>
 					<Route element={<AdminRoute />}>
 						<Route element={<AppLayout />}>
 							<Route path="/admin" element={<AdminDashboard />} />
 
-							{/* ADMIN PROJECTS */}
 							<Route
 								path="/admin/projects"
 								element={<ProjectsPage />}
 							/>
-
 							<Route
 								path="/admin/projects/create"
 								element={<CreateProjectPage />}
 							/>
-
 							<Route
 								path="/admin/projects/:id/edit"
 								element={<EditProjectPage />}
 							/>
-
 							<Route
 								path="/admin/projects/:id"
 								element={<ProjectDetailsPage />}
 							/>
 
-							{/* ADMIN USERS */}
 							<Route
 								path="/admin/users"
 								element={<UsersPage />}
 							/>
-
 							<Route
 								path="/admin/users/register"
 								element={<CreateUserPage />}
 							/>
-
 							<Route
 								path="/admin/users/:id"
 								element={<UserDetailsPage />}
 							/>
-
 							<Route
 								path="/admin/users/:id/edit"
 								element={<UserEditPage />}

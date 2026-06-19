@@ -126,7 +126,7 @@ const UserDashboard = () => {
 										? new Date(
 												project.startDate,
 											).toLocaleDateString()
-										: "-"}
+										: "Not set"}
 								</p>
 
 								<p>
@@ -135,7 +135,7 @@ const UserDashboard = () => {
 										? new Date(
 												project.endDate,
 											).toLocaleDateString()
-										: "-"}
+										: "Not set"}
 								</p>
 
 								{deadline !== null && (

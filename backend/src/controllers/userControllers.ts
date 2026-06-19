@@ -10,7 +10,7 @@ import { Project } from "#models";
 /* -----------------------------
    GET CURRENT USER
 ------------------------------*/
-export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
+/*export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
 	try {
 		const user = await User.findById(req.user.userId).select("-password");
 
@@ -19,6 +19,42 @@ export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
 		}
 
 		res.json(user);
+	} catch (err) {
+		next(err);
+	}
+};*/
+
+export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
+	try {
+		const user = await User.findById(req.user.userId).select("-password");
+
+		if (!user) {
+			return next(new AppError("User not found", 404));
+		}
+
+		const projects = await Project.find({
+			"tasks.taskMember": user._id,
+		});
+
+		const assignedTasks = projects.flatMap((project) =>
+			project.tasks
+				.filter(
+					(task) =>
+						task.taskMember?.toString() === user._id.toString(),
+				)
+				.map((task) => ({
+					projectId: project._id,
+					projectTitle: project.projectTitle,
+					taskTitle: task.taskTitle,
+					taskStatus: task.taskStatus,
+					timeSpentTotal: task.timeSpentTotal,
+				})),
+		);
+
+		res.json({
+			...user.toObject(),
+			assignedTasks,
+		});
 	} catch (err) {
 		next(err);
 	}
