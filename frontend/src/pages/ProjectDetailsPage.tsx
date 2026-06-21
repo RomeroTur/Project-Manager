@@ -66,11 +66,20 @@ const ProjectDetailsPage = () => {
 
 	let deadlineDays: number | null = null;
 
-	if (project?.startDate && project?.endDate) {
+	/*if (project?.startDate && project?.endDate) {
 		const s = new Date(project.startDate).getTime();
 		const e = new Date(project.endDate).getTime();
 
 		deadlineDays = Math.ceil((e - s) / (1000 * 60 * 60 * 24));
+	}*/
+
+	if (project?.endDate) {
+		const today = new Date();
+		const end = new Date(project.endDate);
+
+		deadlineDays = Math.ceil(
+			(end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+		);
 	}
 
 	/* =========================

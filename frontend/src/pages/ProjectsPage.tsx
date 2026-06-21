@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import type { Project } from "../types/Project";
 
 /* =========================
-   DEADLINE CONFIG
+	DEADLINE DAYS
 ========================= */
 
 const DEADLINE_WARNING_DAYS = 14;
@@ -55,13 +55,15 @@ const ProjectsPage = () => {
 		if (user) load();
 	}, [user]);
 
-	const calculateDays = (start?: string, end?: string) => {
-		if (!start || !end) return null;
+	const calculateDaysLeft = (endDate?: string) => {
+		if (!endDate) return null;
 
-		const s = new Date(start).getTime();
-		const e = new Date(end).getTime();
+		const today = new Date();
+		const end = new Date(endDate);
 
-		return Math.ceil((e - s) / (1000 * 60 * 60 * 24));
+		return Math.ceil(
+			(end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+		);
 	};
 
 	const formatDate = (date?: string) => {
@@ -91,10 +93,7 @@ const ProjectsPage = () => {
 			{/* PROJECT LIST */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 				{projects.map((project) => {
-					const deadline = calculateDays(
-						project.startDate,
-						project.endDate,
-					);
+					const deadline = calculateDaysLeft(project.endDate);
 
 					const deadlineStyle = getDeadlineStyle(deadline);
 

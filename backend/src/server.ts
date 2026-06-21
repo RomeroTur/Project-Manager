@@ -4,6 +4,9 @@ import { connectDB } from "#db";
 import { userRouter, projectRouter } from "#routes";
 import { errorHandler } from "#middleware";
 
+/* ========================= AI STUFF ========================= */
+import { aiRouter } from "#routes";
+
 import cors from "cors";
 
 const server = express();
@@ -17,6 +20,9 @@ server.use(
 
 server.use(express.json());
 server.use(cookieParser());
+
+/* ========================= AI STUFF ========================= */
+server.use("/ai/", aiRouter);
 
 server.use("/users/", userRouter);
 server.use("/projects/", projectRouter);

@@ -12,24 +12,24 @@ const AdminDashboard = () => {
 	const [loadingUsers, setLoadingUsers] = useState(true);
 
 	/* =========================
-	   UX CONFIG (EASY TUNING)
+	   DEADLINE DAYS
 	========================= */
 
 	const DEADLINE_WARNING_DAYS = 14;
 	const DEADLINE_CRITICAL_DAYS = 7;
 
 	/* =========================
-	   DEADLINE LOGIC
+	   DEADLINE
 	========================= */
 
-	const calculateDaysLeft = (startDate?: string, endDate?: string) => {
-		if (!startDate || !endDate) return null;
+	const calculateDaysLeft = (endDate?: string) => {
+		if (!endDate) return null;
 
-		const start = new Date(startDate);
+		const today = new Date();
 		const end = new Date(endDate);
 
 		return Math.ceil(
-			(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+			(end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
 		);
 	};
 
@@ -111,10 +111,7 @@ const AdminDashboard = () => {
 
 				<div className="space-y-4">
 					{projects.map((project) => {
-						const daysLeft = calculateDaysLeft(
-							project.startDate,
-							project.endDate,
-						);
+						const daysLeft = calculateDaysLeft(project.endDate);
 
 						const deadlineStyle = getDeadlineStyle(daysLeft);
 

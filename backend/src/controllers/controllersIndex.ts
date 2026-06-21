@@ -23,3 +23,6 @@ export {
 	updateComment,
 	deleteComment,
 } from "./projectControllers.js";
+
+/* =================== AI STUFF =====================*/
+export { aiChatController } from "./aiController.js";

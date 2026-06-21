@@ -79,18 +79,21 @@ const UserDashboard = () => {
 		loadUsers();
 	}, []);
 
-	const calculateDaysLeft = (start?: string, end?: string) => {
-		if (!start || !end) return null;
+	const calculateDaysLeft = (endDate?: string) => {
+		if (!endDate) return null;
 
-		const startTime = new Date(start).getTime();
-		const endTime = new Date(end).getTime();
+		const today = new Date();
+		const end = new Date(endDate);
 
-		return Math.ceil((endTime - startTime) / (1000 * 60 * 60 * 24));
+		return Math.ceil(
+			(end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+		);
 	};
 
 	return (
 		<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 			{/* ================= PROJECTS ================= */}
+
 			<div className="space-y-4">
 				<h2 className="text-2xl font-bold">My Projects</h2>
 
@@ -99,10 +102,7 @@ const UserDashboard = () => {
 				)}
 
 				{projects.map((project) => {
-					const deadline = calculateDaysLeft(
-						project.startDate,
-						project.endDate,
-					);
+					const deadline = calculateDaysLeft(project.endDate);
 
 					const deadlineStyle = getDeadlineStyle(deadline);
 
@@ -184,6 +184,7 @@ const UserDashboard = () => {
 			</div>
 
 			{/* ================= USERS ================= */}
+
 			<div className="space-y-4">
 				<h2 className="text-2xl font-bold">Users</h2>
 

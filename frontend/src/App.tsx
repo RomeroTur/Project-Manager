@@ -23,89 +23,109 @@ import AppLayout from "./layouts/AppLayout";
 
 import "./index.css";
 
+import ChatBot from "./components/ChatBot";
+
 function App() {
 	return (
-		<BrowserRouter>
-			<Routes>
-				{/* PUBLIC */}
-				<Route path="/" element={<Navigate to="/login" replace />} />
-				<Route path="/login" element={<LoginPage />} />
+		<>
+			<BrowserRouter>
+				<Routes>
+					{/* PUBLIC */}
+					<Route
+						path="/"
+						element={<Navigate to="/login" replace />}
+					/>
+					<Route path="/login" element={<LoginPage />} />
 
-				{/* PROTECTED */}
-				<Route element={<ProtectedRoute />}>
-					<Route element={<AppLayout />}>
-						{/* DASHBOARD */}
-						<Route path="/dashboard" element={<UserDashboard />} />
-
-						{/* PROFILE */}
-						<Route path="/profile" element={<UserDetailsPage />} />
-
-						{/* PROJECTS */}
-						<Route path="/projects" element={<ProjectsPage />} />
-						<Route
-							path="/projects/:id"
-							element={<ProjectDetailsPage />}
-						/>
-
-						{/* USERS (LIST + VIEW) */}
-						<Route path="/users" element={<UserListPage />} />
-						<Route
-							path="/users/:id"
-							element={<UserDetailsPage />}
-						/>
-					</Route>
-				</Route>
-
-				{/* ADMIN */}
-				<Route element={<ProtectedRoute />}>
-					<Route element={<AdminRoute />}>
+					{/* PROTECTED */}
+					<Route element={<ProtectedRoute />}>
 						<Route element={<AppLayout />}>
-							<Route path="/admin" element={<AdminDashboard />} />
-
+							{/* DASHBOARD */}
 							<Route
-								path="/admin/projects"
+								path="/dashboard"
+								element={<UserDashboard />}
+							/>
+
+							{/* PROFILE */}
+							<Route
+								path="/profile"
+								element={<UserDetailsPage />}
+							/>
+
+							{/* PROJECTS */}
+							<Route
+								path="/projects"
 								element={<ProjectsPage />}
 							/>
 							<Route
-								path="/admin/projects/create"
-								element={<CreateProjectPage />}
-							/>
-							<Route
-								path="/admin/projects/:id/edit"
-								element={<EditProjectPage />}
-							/>
-							<Route
-								path="/admin/projects/:id"
+								path="/projects/:id"
 								element={<ProjectDetailsPage />}
 							/>
 
+							{/* USERS (LIST + VIEW) */}
+							<Route path="/users" element={<UserListPage />} />
 							<Route
-								path="/admin/users"
-								element={<UsersPage />}
-							/>
-							<Route
-								path="/admin/users/register"
-								element={<CreateUserPage />}
-							/>
-							<Route
-								path="/admin/users/:id"
+								path="/users/:id"
 								element={<UserDetailsPage />}
-							/>
-							<Route
-								path="/admin/users/:id/edit"
-								element={<UserEditPage />}
 							/>
 						</Route>
 					</Route>
-				</Route>
 
-				{/* fallback */}
-				<Route
-					path="*"
-					element={<Navigate to="/dashboard" replace />}
-				/>
-			</Routes>
-		</BrowserRouter>
+					{/* ADMIN */}
+					<Route element={<ProtectedRoute />}>
+						<Route element={<AdminRoute />}>
+							<Route element={<AppLayout />}>
+								<Route
+									path="/admin"
+									element={<AdminDashboard />}
+								/>
+
+								<Route
+									path="/admin/projects"
+									element={<ProjectsPage />}
+								/>
+								<Route
+									path="/admin/projects/create"
+									element={<CreateProjectPage />}
+								/>
+								<Route
+									path="/admin/projects/:id/edit"
+									element={<EditProjectPage />}
+								/>
+								<Route
+									path="/admin/projects/:id"
+									element={<ProjectDetailsPage />}
+								/>
+
+								<Route
+									path="/admin/users"
+									element={<UsersPage />}
+								/>
+								<Route
+									path="/admin/users/register"
+									element={<CreateUserPage />}
+								/>
+								<Route
+									path="/admin/users/:id"
+									element={<UserDetailsPage />}
+								/>
+								<Route
+									path="/admin/users/:id/edit"
+									element={<UserEditPage />}
+								/>
+							</Route>
+						</Route>
+					</Route>
+
+					{/* fallback */}
+					<Route
+						path="*"
+						element={<Navigate to="/dashboard" replace />}
+					/>
+				</Routes>
+			</BrowserRouter>
+			<ChatBot />
+		</>
 	);
 }
 
