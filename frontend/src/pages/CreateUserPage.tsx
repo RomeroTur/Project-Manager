@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { API_URL } from "../config/api";
+
 const CreateUserPage = () => {
 	const navigate = useNavigate();
 
@@ -27,34 +29,31 @@ const CreateUserPage = () => {
 		e.preventDefault();
 
 		try {
-			const response = await fetch(
-				"http://localhost:3000/users/register",
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					credentials: "include",
-					body: JSON.stringify({
-						firstname,
-						lastname,
-						email,
-						password,
-						role,
-						skills: skills
-							.split(",")
-							.map((s) => s.trim())
-							.filter(Boolean),
-
-						personal: {
-							birthday: birthday || undefined,
-							tel,
-							address,
-							description,
-						},
-					}),
+			const response = await fetch(`${API_URL}/users/register`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
 				},
-			);
+				credentials: "include",
+				body: JSON.stringify({
+					firstname,
+					lastname,
+					email,
+					password,
+					role,
+					skills: skills
+						.split(",")
+						.map((s) => s.trim())
+						.filter(Boolean),
+
+					personal: {
+						birthday: birthday || undefined,
+						tel,
+						address,
+						description,
+					},
+				}),
+			});
 
 			const data = await response.json();
 

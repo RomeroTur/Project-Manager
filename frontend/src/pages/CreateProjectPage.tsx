@@ -4,6 +4,8 @@ import { z } from "zod";
 
 import type { User } from "../types/User";
 
+import { API_URL } from "../config/api";
+
 /* =========================
    ZOD VALIDATION
 ========================= */
@@ -65,7 +67,7 @@ const CreateProjectPage = () => {
 	useEffect(() => {
 		const loadUsers = async () => {
 			try {
-				const res = await fetch("http://localhost:3000/users", {
+				const res = await fetch(`${API_URL}/users`, {
 					credentials: "include",
 				});
 
@@ -162,7 +164,7 @@ const CreateProjectPage = () => {
 		};
 
 		try {
-			const res = await fetch("http://localhost:3000/projects/create", {
+			const res = await fetch(`${API_URL}/projects/create`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

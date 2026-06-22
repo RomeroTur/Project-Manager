@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import type { DashboardProject } from "../types/DashboardProject";
 import type { DashboardUser } from "../types/DashboardUser";
 
+import { API_URL } from "../config/api";
+
 const AdminDashboard = () => {
 	const [projects, setProjects] = useState<DashboardProject[]>([]);
 	const [users, setUsers] = useState<DashboardUser[]>([]);
@@ -63,7 +65,7 @@ const AdminDashboard = () => {
 	useEffect(() => {
 		const loadProjects = async () => {
 			try {
-				const res = await fetch("http://localhost:3000/projects", {
+				const res = await fetch(`${API_URL}/projects`, {
 					credentials: "include",
 				});
 
@@ -78,7 +80,7 @@ const AdminDashboard = () => {
 
 		const loadUsers = async () => {
 			try {
-				const res = await fetch("http://localhost:3000/users", {
+				const res = await fetch(`${API_URL}/users`, {
 					credentials: "include",
 				});
 

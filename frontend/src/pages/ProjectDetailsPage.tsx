@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import type { Project, Task } from "../types/Project";
 
+import { API_URL } from "../config/api";
+
 /* =========================
    TYPES
 ========================= */
@@ -40,7 +42,7 @@ const ProjectDetailsPage = () => {
 
 	const loadProject = async () => {
 		try {
-			const res = await fetch(`http://localhost:3000/projects/${id}`, {
+			const res = await fetch(`${API_URL}/projects/${id}`, {
 				credentials: "include",
 			});
 
@@ -116,7 +118,7 @@ const ProjectDetailsPage = () => {
 		const form = getTaskForm(taskId);
 
 		await fetch(
-			`http://localhost:3000/projects/${project!._id}/tasks/${taskId}/time`,
+			`${API_URL}/projects/${project!._id}/tasks/${taskId}/time`,
 			{
 				method: "POST",
 				credentials: "include",
@@ -141,7 +143,7 @@ const ProjectDetailsPage = () => {
 		if (!editingRecord) return;
 
 		await fetch(
-			`http://localhost:3000/projects/${project!._id}/tasks/${editingRecord.taskId}/time/${editingRecord.recordId}`,
+			`${API_URL}/projects/${project!._id}/tasks/${editingRecord.taskId}/time/${editingRecord.recordId}`,
 			{
 				method: "PATCH",
 				credentials: "include",
@@ -156,7 +158,7 @@ const ProjectDetailsPage = () => {
 
 	const deleteTimeRecord = async (taskId: string, recordId: string) => {
 		await fetch(
-			`http://localhost:3000/projects/${project!._id}/tasks/${taskId}/time/${recordId}`,
+			`${API_URL}/projects/${project!._id}/tasks/${taskId}/time/${recordId}`,
 			{
 				method: "DELETE",
 				credentials: "include",
@@ -269,6 +271,7 @@ const ProjectDetailsPage = () => {
 				</div>
 
 				{/* ================= RIGHT SIDE ================= */}
+
 				<div className="bg-white border rounded-lg p-5 shadow-sm">
 					<h2 className="text-lg font-semibold mb-4">Tasks</h2>
 
@@ -308,8 +311,8 @@ const ProjectDetailsPage = () => {
 									</p>
 
 									{/* =========================
-			   TIME RECORDS (TOP)
-			========================= */}
+										TIME RECORDS (TOP)
+									========================= */}
 
 									<div className="mb-3">
 										<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
@@ -388,8 +391,8 @@ const ProjectDetailsPage = () => {
 									</div>
 
 									{/* =========================
-			   EDIT FORM (DIRECTLY BELOW RECORD)
-			========================= */}
+										EDIT FORM (DIRECTLY BELOW RECORD)
+									========================= */}
 
 									{isEditingThisTask && (
 										<div className="mb-3 border-t pt-3">
@@ -497,8 +500,8 @@ const ProjectDetailsPage = () => {
 									)}
 
 									{/* =========================
-			   ADD TIME FORM (BOTTOM)
-			========================= */}
+										ADD TIME FORM (BOTTOM)
+									========================= */}
 
 									{canTrackTime(task) && (
 										<div className="border-t pt-3 mt-3">

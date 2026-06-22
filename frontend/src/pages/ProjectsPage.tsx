@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { Link } from "react-router-dom";
 import type { Project } from "../types/Project";
+import { API_URL } from "../config/api";
 
 /* =========================
 	DEADLINE DAYS
@@ -41,8 +42,8 @@ const ProjectsPage = () => {
 		const load = async () => {
 			const url =
 				user?.role === "admin"
-					? "http://localhost:3000/projects"
-					: "http://localhost:3000/projects/my-projects";
+					? `${API_URL}/projects`
+					: `${API_URL}/projects/my-projects`;
 
 			const res = await fetch(url, {
 				credentials: "include",

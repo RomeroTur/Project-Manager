@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "../types/User";
 import { AuthContext } from "../context/AuthContext";
-//import type { AuthContextType } from "../context/auth.types";
+import { API_URL } from "../config/api";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = useState<User | null>(null);
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	// GET CURRENT USER
 	const refreshUser = async () => {
 		try {
-			const res = await fetch("http://localhost:3000/users/me", {
+			const res = await fetch(`${API_URL}/users/me`, {
 				credentials: "include",
 			});
 
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 	// LOGIN
 	const login = async (email: string, password: string) => {
-		const res = await fetch("http://localhost:3000/users/login", {
+		const res = await fetch(`${API_URL}/users/login`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			credentials: "include",
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
 	// LOGOUT
 	const logout = async () => {
-		await fetch("http://localhost:3000/users/logout", {
+		await fetch(`${API_URL}/users/logout`, {
 			method: "POST",
 			credentials: "include",
 		});

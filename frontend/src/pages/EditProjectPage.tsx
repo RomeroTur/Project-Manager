@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { User } from "../types/User";
 import type { Project, Task } from "../types/Project";
 
+import { API_URL } from "../config/api";
+
 const EditProjectPage = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
@@ -27,10 +29,10 @@ const EditProjectPage = () => {
 	useEffect(() => {
 		const loadData = async () => {
 			const [projectRes, usersRes] = await Promise.all([
-				fetch(`http://localhost:3000/projects/${id}`, {
+				fetch(`${API_URL}/projects/${id}`, {
 					credentials: "include",
 				}),
-				fetch("http://localhost:3000/users", {
+				fetch(`${API_URL}/users`, {
 					credentials: "include",
 				}),
 			]);
@@ -106,7 +108,7 @@ const EditProjectPage = () => {
 	const handleDelete = async () => {
 		if (!window.confirm("Delete this project permanently?")) return;
 
-		await fetch(`http://localhost:3000/projects/${id}`, {
+		await fetch(`${API_URL}/projects/${id}`, {
 			method: "DELETE",
 			credentials: "include",
 		});
@@ -120,7 +122,7 @@ const EditProjectPage = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		await fetch(`http://localhost:3000/projects/${id}`, {
+		await fetch(`${API_URL}/projects/${id}`, {
 			method: "PATCH",
 			headers: { "Content-Type": "application/json" },
 			credentials: "include",

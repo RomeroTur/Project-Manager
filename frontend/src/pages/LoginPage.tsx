@@ -3,6 +3,8 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { loginSchema } from "../schemas/loginSchema";
 
+import { API_URL } from "../config/api";
+
 const LoginPage = () => {
 	const [formError, setFormError] = useState("");
 	const navigate = useNavigate();
@@ -50,7 +52,7 @@ const LoginPage = () => {
 		try {
 			await login(email, password);
 
-			const me = await fetch("http://localhost:3000/users/me", {
+			const me = await fetch(`${API_URL}/users/me`, {
 				credentials: "include",
 			});
 

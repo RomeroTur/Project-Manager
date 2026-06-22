@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import type { Project, Task } from "../types/Project";
 import type { User } from "../types/User";
 
+import { API_URL } from "../config/api";
+
 /* -----------------------------
    ENRICHED TYPE (frontend only)
 ------------------------------*/
@@ -22,10 +24,10 @@ const UsersPage = () => {
 	useEffect(() => {
 		const load = async () => {
 			const [usersRes, projectsRes] = await Promise.all([
-				fetch("http://localhost:3000/users", {
+				fetch(`${API_URL}/users`, {
 					credentials: "include",
 				}),
-				fetch("http://localhost:3000/projects", {
+				fetch(`${API_URL}/projects`, {
 					credentials: "include",
 				}),
 			]);

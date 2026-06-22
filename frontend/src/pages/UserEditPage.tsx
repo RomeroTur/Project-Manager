@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
+import { API_URL } from "../config/api";
+
 const UserEditPage = () => {
 	const { user: authUser } = useAuth();
 
@@ -29,12 +31,9 @@ const UserEditPage = () => {
 	useEffect(() => {
 		const loadUser = async () => {
 			try {
-				const response = await fetch(
-					`http://localhost:3000/users/${id}`,
-					{
-						credentials: "include",
-					},
-				);
+				const response = await fetch(`${API_URL}/users/${id}`, {
+					credentials: "include",
+				});
 
 				const user = await response.json();
 
@@ -71,7 +70,7 @@ const UserEditPage = () => {
 		e.preventDefault();
 
 		try {
-			const response = await fetch(`http://localhost:3000/users/${id}`, {
+			const response = await fetch(`${API_URL}/users/${id}`, {
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
@@ -117,7 +116,7 @@ const UserEditPage = () => {
 		if (!confirmDelete) return;
 
 		try {
-			await fetch(`http://localhost:3000/users/${id}`, {
+			await fetch(`${API_URL}/users/${id}`, {
 				method: "DELETE",
 				credentials: "include",
 			});

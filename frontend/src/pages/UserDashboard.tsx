@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import type { DashboardProject } from "../types/DashboardProject";
 import type { DashboardUser } from "../types/DashboardUser";
 
+import { API_URL } from "../config/api";
+
 /* =========================
    DEADLINE CONFIG
 ========================= */
@@ -44,12 +46,9 @@ const UserDashboard = () => {
 	useEffect(() => {
 		const loadProjects = async () => {
 			try {
-				const res = await fetch(
-					"http://localhost:3000/projects/my-projects",
-					{
-						credentials: "include",
-					},
-				);
+				const res = await fetch(`${API_URL}/projects/my-projects`, {
+					credentials: "include",
+				});
 
 				const data = await res.json();
 				setProjects(data);
@@ -62,7 +61,7 @@ const UserDashboard = () => {
 
 		const loadUsers = async () => {
 			try {
-				const res = await fetch("http://localhost:3000/users", {
+				const res = await fetch(`${API_URL}/users`, {
 					credentials: "include",
 				});
 

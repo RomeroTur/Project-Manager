@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import type { Project, Task } from "../types/Project";
 import type { User } from "../types/User";
 
+import { API_URL } from "../config/api";
+
 type UserWithTasks = User & {
 	assignedTasks: {
 		projectTitle: string;
@@ -18,10 +20,10 @@ const UserListPage = () => {
 	useEffect(() => {
 		const load = async () => {
 			const [usersRes, projectsRes] = await Promise.all([
-				fetch("http://localhost:3000/users", {
+				fetch(`${API_URL}/users`, {
 					credentials: "include",
 				}),
-				fetch("http://localhost:3000/projects", {
+				fetch(`${API_URL}/projects`, {
 					credentials: "include",
 				}),
 			]);
@@ -72,7 +74,7 @@ const UserListPage = () => {
 				<h1 className="text-2xl font-bold">Users</h1>
 			</div>
 
-			{/* USER LIST (same layout as UsersPage) */}
+			{/* USER LIST */}
 			<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 				{users.map((user) => (
 					<div
@@ -135,7 +137,7 @@ const UserListPage = () => {
 							)}
 						</div>
 
-						{/* ACTIONS (READ-ONLY) */}
+						{/* ACTIONS */}
 						<div className="flex gap-2 mt-auto pt-4 border-t border-gray-100">
 							<Link
 								to={`/users/${user._id}`}

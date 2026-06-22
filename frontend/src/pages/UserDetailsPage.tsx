@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import type { User } from "../types/User";
 
+import { API_URL } from "../config/api";
+
 const UserDetailsPage = () => {
 	const { id } = useParams();
 	const { user: authUser } = useAuth();
@@ -16,8 +18,8 @@ const UserDetailsPage = () => {
 	useEffect(() => {
 		const load = async () => {
 			const url = isProfile
-				? "http://localhost:3000/users/me"
-				: `http://localhost:3000/users/${targetId}`;
+				? `${API_URL}/users/me`
+				: `${API_URL}/users/${targetId}`;
 
 			const res = await fetch(url, {
 				credentials: "include",
@@ -43,6 +45,7 @@ const UserDetailsPage = () => {
 				{/* =========================
 					ACTIONS
 				========================= */}
+
 				<div className="flex gap-3 lg:justify-end items-center">
 					{authUser?.role === "admin" && (
 						<Link

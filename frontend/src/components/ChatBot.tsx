@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { API_URL } from "../config/api";
 
 const ChatBot = () => {
 	const [open, setOpen] = useState(false);
@@ -27,7 +28,7 @@ const ChatBot = () => {
 		setLoading(true);
 
 		try {
-			const res = await fetch("http://localhost:3000/ai/chat", {
+			const res = await fetch(`${API_URL}/ai/chat`, {
 				method: "POST",
 				credentials: "include",
 				headers: {
