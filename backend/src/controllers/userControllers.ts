@@ -174,7 +174,7 @@ export const loginUser: RequestHandler = async (req, res, next) => {
 
 		res.cookie("token", token, {
 			httpOnly: true,
-			sameSite: "lax",
+			sameSite: "none",
 			secure: true,
 		});
 
