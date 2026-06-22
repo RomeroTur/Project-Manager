@@ -14,9 +14,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 				credentials: "include",
 			});
 
-			if (!res.ok) {
+			if (res.status === 401) {
 				setUser(null);
 				return;
+			}
+
+			if (!res.ok) {
+				throw new Error("Failed to fetch user");
 			}
 
 			const data = await res.json();
