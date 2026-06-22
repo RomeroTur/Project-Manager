@@ -1,4 +1,4 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -28,7 +28,7 @@ const AdminLayout = () => {
 			</header>
 
 			<main className="flex">
-				<aside>
+				{/*<aside>
 					<nav className="flex flex-col gap-4">
 						<Link to="/admin">Dashboard</Link>
 
@@ -36,7 +36,7 @@ const AdminLayout = () => {
 
 						<Link to="/admin/users">Users</Link>
 					</nav>
-				</aside>
+				</aside>*/}
 				<div className="container">
 					<Outlet />
 				</div>

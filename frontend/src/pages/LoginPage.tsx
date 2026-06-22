@@ -67,12 +67,7 @@ const LoginPage = () => {
 			<div className="w-full max-w-md bg-white rounded-xl shadow-md p-8">
 				{/* HEADER */}
 				<div className="mb-6 text-center">
-					<h1 className="text-2xl font-bold text-gray-800">
-						Welcome
-					</h1>
-					<p className="text-sm text-gray-500 mt-1">
-						Please sign in to continue
-					</p>
+					<h1 className="text-2xl font-bold text-gray-800">Login</h1>
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">

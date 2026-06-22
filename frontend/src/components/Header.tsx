@@ -9,9 +9,12 @@ const Header = () => {
 
 	return (
 		<header className="bg-white border-b px-6 py-3 flex justify-between items-center">
-			<h1 className="text-gray-700 font-medium">
-				Welcome, <span className="font-semibold">{user.firstname}</span>
-			</h1>
+			<div>
+				<h1 className="text-gray-700 text-xl font-bold">
+					{user.firstname} {user.lastname}
+				</h1>
+				<p>Role: {user.role}</p>
+			</div>
 
 			<button
 				onClick={async () => {
