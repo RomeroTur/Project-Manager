@@ -10,19 +10,6 @@ import { Project } from "#models";
 /* -----------------------------
    GET CURRENT USER
 ------------------------------*/
-/*export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
-	try {
-		const user = await User.findById(req.user.userId).select("-password");
-
-		if (!user) {
-			return next(new AppError("User not found", 404));
-		}
-
-		res.json(user);
-	} catch (err) {
-		next(err);
-	}
-};*/
 
 export const getCurrentUser: RequestHandler = async (req: any, res, next) => {
 	try {
@@ -187,7 +174,8 @@ export const loginUser: RequestHandler = async (req, res, next) => {
 
 		res.cookie("token", token, {
 			httpOnly: true,
-			sameSite: "lax",
+			sameSite: "none",
+			secure: true,
 		});
 
 		res.json({
