@@ -174,7 +174,7 @@ export const loginUser: RequestHandler = async (req, res, next) => {
 
 		res.cookie("token", token, {
 			httpOnly: true,
-			sameSite: "none",
+			sameSite: "lax",
 			secure: true,
 		});
 
@@ -200,6 +200,7 @@ export const logoutUser: RequestHandler = async (req, res) => {
 	res.clearCookie("token", {
 		httpOnly: true,
 		sameSite: "lax",
+		secure: true,
 	});
 
 	res.json({
