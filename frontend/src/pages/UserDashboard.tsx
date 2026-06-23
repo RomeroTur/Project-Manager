@@ -146,28 +146,20 @@ const UserDashboard = () => {
 								)}
 							</div>
 
-							<div className="mt-4">
-								<h4 className="text-sm font-semibold text-gray-700">
-									Members
-								</h4>
-
-								{project.projectMembers?.length ? (
-									<div className="mt-2 text-sm text-gray-600">
-										{project.projectMembers.map(
-											(member) => (
-												<p key={member._id}>
-													{member.firstname}{" "}
-													{member.lastname}
-												</p>
-											),
-										)}
-									</div>
-								) : (
-									<p className="text-sm text-gray-400 mt-2">
-										No members assigned
-									</p>
-								)}
-							</div>
+							<p className="text-sm text-gray-600 mt-2">
+								<span className="font-medium">
+									Assigned to:
+								</span>{" "}
+								{project.projectMembers?.length
+									? project.projectMembers
+											.map((member) =>
+												typeof member === "string"
+													? member
+													: `${member.firstname} ${member.lastname}`,
+											)
+											.join(", ")
+									: "not assigned"}
+							</p>
 
 							<div className="mt-auto pt-4 border-t border-gray-100">
 								<Link
