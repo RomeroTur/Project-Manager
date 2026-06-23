@@ -23,7 +23,7 @@ import AppLayout from "./layouts/AppLayout";
 
 import "./index.css";
 
-import ChatBot from "./components/ChatBot";
+//import ChatBot from "./components/ChatBot";
 
 function App() {
 	return (
@@ -124,7 +124,6 @@ function App() {
 					/>
 				</Routes>
 			</BrowserRouter>
-			<ChatBot />
 		</>
 	);
 }

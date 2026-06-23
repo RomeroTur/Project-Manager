@@ -59,8 +59,12 @@ const LoginPage = () => {
 			const currentUser = await me.json();
 
 			navigate(currentUser.role === "admin" ? "/admin" : "/dashboard");
-		} catch (err: any) {
-			setFormError(err?.message || "Login failed");
+		} catch (err: unknown) {
+			if (err instanceof Error) {
+				setFormError(err.message);
+			} else {
+				setFormError("Login failed");
+			}
 		}
 	};
 
