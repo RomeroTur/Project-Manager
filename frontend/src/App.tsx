@@ -23,7 +23,22 @@ import AppLayout from "./layouts/AppLayout";
 
 import "./index.css";
 
-//import ChatBot from "./components/ChatBot";
+/*
+admin1@company.com
+Password123
+
+admin2@company.com
+Password123
+
+user1@company.com
+Password123
+
+through
+
+user13@company.com
+Password123
+
+*/
 
 function App() {
 	return (
