@@ -344,6 +344,47 @@ const deleteTimeRecord: RequestHandler = async (req: any, res, next) => {
 	}
 };
 
+/* =========================
+   STATUS
+========================= */
+
+const updateTaskStatus: RequestHandler = async (req: any, res, next) => {
+	try {
+		const { projectId, taskId } = req.params;
+		const { taskStatus } = req.body;
+
+		const project = await Project.findById(projectId);
+
+		if (!project) {
+			return next(new AppError("Project not found", 404));
+		}
+
+		const task = project.tasks.id(taskId);
+
+		if (!task) {
+			return next(new AppError("Task not found", 404));
+		}
+
+		const isAdmin = req.user.role === "admin";
+
+		const isAssignedUser = task.taskMember?.toString() === req.user.userId;
+
+		if (!isAdmin && !isAssignedUser) {
+			return next(new AppError("Not authorized", 403));
+		}
+
+		task.taskStatus = taskStatus;
+
+		await project.save();
+
+		res.json({
+			message: "Task status updated",
+		});
+	} catch (err) {
+		next(err);
+	}
+};
+
 /* =========================================================
    COMMENTS
 ========================================================= */
@@ -435,4 +476,5 @@ export {
 	addComment,
 	updateComment,
 	deleteComment,
+	updateTaskStatus,
 };

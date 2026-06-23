@@ -22,6 +22,7 @@ export {
 	addComment,
 	updateComment,
 	deleteComment,
+	updateTaskStatus,
 } from "./projectControllers.js";
 
 /* =================== AI STUFF =====================*/

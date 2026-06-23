@@ -169,6 +169,32 @@ const ProjectDetailsPage = () => {
 	};
 
 	/* =========================
+	   TASKS
+	========================= */
+
+	const updateTaskStatus = async (taskId: string, taskStatus: string) => {
+		try {
+			await fetch(
+				`${API_URL}/projects/${project!._id}/tasks/${taskId}/status`,
+				{
+					method: "PATCH",
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						taskStatus,
+					}),
+				},
+			);
+
+			await loadProject();
+		} catch (err) {
+			console.error(err);
+		}
+	};
+
+	/* =========================
 	   LOADING
 	========================= */
 
@@ -206,6 +232,7 @@ const ProjectDetailsPage = () => {
 
 				<div className="space-y-6">
 					{/* PROJECT CARD */}
+
 					<div className="bg-white border rounded-lg p-5 shadow-sm">
 						<h1 className="text-2xl font-bold">
 							{project.projectTitle}
@@ -294,9 +321,40 @@ const ProjectDetailsPage = () => {
 										<p className="font-semibold">
 											{task.taskTitle}
 										</p>
+									</div>
+									<div className="mb-3 flex justify-between">
 										<p className="text-sm text-gray-500">
 											Status: {task.taskStatus}
 										</p>
+										{canTrackTime(task) ? (
+											<select
+												value={task.taskStatus}
+												onChange={(e) =>
+													updateTaskStatus(
+														task._id!,
+														e.target.value,
+													)
+												}
+												className="border rounded px-2 py-1 text-sm"
+											>
+												<option value="on hold">
+													On hold
+												</option>
+												<option value="in process">
+													In process
+												</option>
+												<option value="completed">
+													Completed
+												</option>
+												<option value="cancelled">
+													Cancelled
+												</option>
+											</select>
+										) : (
+											<p className="text-sm text-gray-500">
+												Status: {task.taskStatus}
+											</p>
+										)}
 									</div>
 
 									{/* MEMBER */}
@@ -311,7 +369,7 @@ const ProjectDetailsPage = () => {
 									</p>
 
 									{/* =========================
-										TIME RECORDS (TOP)
+										TIME RECORDS
 									========================= */}
 
 									<div className="mb-3">
@@ -391,7 +449,7 @@ const ProjectDetailsPage = () => {
 									</div>
 
 									{/* =========================
-										EDIT FORM (DIRECTLY BELOW RECORD)
+										EDIT FORM
 									========================= */}
 
 									{isEditingThisTask && (
@@ -500,105 +558,115 @@ const ProjectDetailsPage = () => {
 									)}
 
 									{/* =========================
-										ADD TIME FORM (BOTTOM)
+										ADD TIME FORM
 									========================= */}
 
-									{canTrackTime(task) && (
-										<div className="border-t pt-3 mt-3">
-											<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-												Add time record
-											</h4>
+									{canTrackTime(task) &&
+										task.taskStatus === "in process" && (
+											<div className="border-t pt-3 mt-3">
+												<h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+													Add time record
+												</h4>
 
-											<div className="flex gap-2">
-												<input
-													type="date"
-													className="border p-1 text-sm"
-													value={
-														getTaskForm(task._id!)
-															.date
-													}
-													onChange={(e) =>
-														setTaskForms(
-															(prev) => ({
-																...prev,
-																[task._id!]: {
-																	...getTaskForm(
-																		task._id!,
-																	),
-																	date: e
-																		.target
-																		.value,
-																},
-															}),
-														)
-													}
-												/>
-
-												<input
-													type="number"
-													placeholder="h"
-													className="border p-1 w-16 text-sm"
-													value={
-														getTaskForm(task._id!)
-															.hours
-													}
-													onChange={(e) =>
-														setTaskForms(
-															(prev) => ({
-																...prev,
-																[task._id!]: {
-																	...getTaskForm(
-																		task._id!,
-																	),
-																	hours: Number(
-																		e.target
-																			.value,
-																	),
-																},
-															}),
-														)
-													}
-												/>
-
-												<input
-													type="number"
-													placeholder="m"
-													className="border p-1 w-16 text-sm"
-													value={
-														getTaskForm(task._id!)
-															.minutes
-													}
-													onChange={(e) =>
-														setTaskForms(
-															(prev) => ({
-																...prev,
-																[task._id!]: {
-																	...getTaskForm(
-																		task._id!,
-																	),
-																	minutes:
-																		Number(
-																			e
+												<div className="flex gap-2">
+													<input
+														type="date"
+														className="border p-1 text-sm"
+														value={
+															getTaskForm(
+																task._id!,
+															).date
+														}
+														onChange={(e) =>
+															setTaskForms(
+																(prev) => ({
+																	...prev,
+																	[task._id!]:
+																		{
+																			...getTaskForm(
+																				task._id!,
+																			),
+																			date: e
 																				.target
 																				.value,
-																		),
-																},
-															}),
-														)
-													}
-												/>
+																		},
+																}),
+															)
+														}
+													/>
 
-												<button
-													onClick={() =>
-														addTimeRecord(task._id!)
-													}
-													className="bg-blue-600 text-white px-3 text-sm rounded"
-												>
-													Add
-												</button>
+													<input
+														type="number"
+														placeholder="h"
+														className="border p-1 w-16 text-sm"
+														value={
+															getTaskForm(
+																task._id!,
+															).hours
+														}
+														onChange={(e) =>
+															setTaskForms(
+																(prev) => ({
+																	...prev,
+																	[task._id!]:
+																		{
+																			...getTaskForm(
+																				task._id!,
+																			),
+																			hours: Number(
+																				e
+																					.target
+																					.value,
+																			),
+																		},
+																}),
+															)
+														}
+													/>
+
+													<input
+														type="number"
+														placeholder="m"
+														className="border p-1 w-16 text-sm"
+														value={
+															getTaskForm(
+																task._id!,
+															).minutes
+														}
+														onChange={(e) =>
+															setTaskForms(
+																(prev) => ({
+																	...prev,
+																	[task._id!]:
+																		{
+																			...getTaskForm(
+																				task._id!,
+																			),
+																			minutes:
+																				Number(
+																					e
+																						.target
+																						.value,
+																				),
+																		},
+																}),
+															)
+														}
+													/>
+
+													<button
+														onClick={() =>
+															addTimeRecord(
+																task._id!,
+															)
+														}
+														className="bg-blue-600 text-white px-3 text-sm rounded"
+													>
+														Add
+													</button>
+												</div>
 											</div>
-										</div>
-									)}
+										)}
 								</div>
 							);
 						})}

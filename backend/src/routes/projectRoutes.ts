@@ -15,6 +15,7 @@ import {
 	addComment,
 	updateComment,
 	deleteComment,
+	updateTaskStatus,
 } from "#controllers";
 
 const projectRouter = Router();
@@ -47,6 +48,12 @@ projectRouter.delete(
 	"/:projectId/tasks/:taskId/time/:recordId",
 	authMiddleware,
 	deleteTimeRecord,
+);
+
+projectRouter.patch(
+	"/:projectId/tasks/:taskId/status",
+	authMiddleware,
+	updateTaskStatus,
 );
 
 /* COMMENTS */
